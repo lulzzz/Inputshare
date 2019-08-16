@@ -17,11 +17,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <OutputPath>../builds/release32</OutputPath>
+    <OutputPath>../builds/debug32</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\debug64</OutputPath>
+    <OutputPath>..\builds\debug64</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

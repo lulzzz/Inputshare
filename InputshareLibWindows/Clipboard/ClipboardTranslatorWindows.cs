@@ -69,12 +69,6 @@ namespace InputshareLibWindows.Clipboard
             {
                 System.Windows.Forms.DataObject obj = data as System.Windows.Forms.DataObject;
 
-                ISLogger.Write("Formats:");
-                foreach(var format in data.GetFormats())
-                {
-                    ISLogger.Write(format);
-                }
-
                 if (data.GetDataPresent(DataFormats.Bitmap, true))
                 {
                     using (Image i = obj.GetImage())
@@ -109,8 +103,9 @@ namespace InputshareLibWindows.Clipboard
                     return null;
                 }
             }
-            catch (COMException)
+            catch (COMException ex)
             {
+                ISLogger.Write("COM exception: " + ex.Message);
                 Thread.Sleep(25);
                 if (attempt > 10)
                 {

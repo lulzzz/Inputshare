@@ -34,7 +34,7 @@ namespace InputshareLibWindows
         private delegate IntPtr Procdel(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
         private Procdel WndProcDelegate;
 
-        private Task wndThread;
+        private Thread wndThread;
         private Queue<Action> invokeQueue;
         private CancellationTokenSource cancelToken;
 
@@ -47,10 +47,11 @@ namespace InputshareLibWindows
         {
             WindowName = wndName;
             cancelToken = new CancellationTokenSource();
-            wndThread = new Task(() =>
+            wndThread = new Thread(() =>
             {
                 CreateWindow();
-            }, cancelToken.Token);
+            });
+            wndThread.SetApartmentState(ApartmentState.STA);
             wndThread.Start();
         }
 

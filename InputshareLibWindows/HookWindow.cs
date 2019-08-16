@@ -157,7 +157,6 @@ namespace InputshareLibWindows
 
             if (Closed)
                 throw new InvalidOperationException("Window has been closed");
-
             clipboardChangeCallback = callback;
             InvokeAction(() => { AddClipboardMonitor(); });
         }
@@ -196,15 +195,17 @@ namespace InputshareLibWindows
             {
                 return;
             }
-
             try
             {
                 var obj = System.Windows.Forms.Clipboard.GetDataObject();
 
-                if (obj != null)
+                if(obj == null)
                 {
-                    clipboardChangeCallback(obj);
+                    ISLogger.Write("Failed to read clipboard data.");
+                    return;
                 }
+
+                clipboardChangeCallback(obj);
 
                 clipboardTimer.Restart();
             }catch(Exception ex)

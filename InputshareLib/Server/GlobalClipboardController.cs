@@ -16,12 +16,14 @@ namespace InputshareLib.Server
 
         private SetClipboardDataDelegate SetLocalClipboardData;
         private ClientManager clientMan;
-        private ClipboardOperation currentData;
+        private FileAccessController fileController;
 
         private Dictionary<Guid, ClipboardOperation> previousOperationDictionary = new Dictionary<Guid, ClipboardOperation>();
+        public ClipboardOperation currentOperation { get; private set; }
 
-        public GlobalClipboardController(ClientManager clientManager, SetClipboardDataDelegate setcb)
+        public GlobalClipboardController(ClientManager clientManager, FileAccessController faController, SetClipboardDataDelegate setcb)
         {
+            fileController = faController;
             SetLocalClipboardData = setcb;
             clientMan = clientManager;
         }
@@ -56,27 +58,30 @@ namespace InputshareLib.Server
 
         private async void SetClipboardFiles(ClipboardVirtualFileData cbFiles, ISServerSocket host, Guid operationId)
         {
-            if (currentData != null)
-                previousOperationDictionary.Add(currentData.OperationId, currentData);
+            if (currentOperation != null)
+                previousOperationDictionary.Add(currentOperation.OperationId, currentOperation);
 
-            currentData = new ClipboardOperation(operationId, cbFiles.DataType, cbFiles, host);
+            currentOperation = new ClipboardOperation(operationId, cbFiles.DataType, cbFiles, host);
             if (host == ISServerSocket.Localhost)
             {
-                //create tokens and send to client
+                //TODO - We can't use the same access token for clipboard operations, as more than one client can
+                //be reading from the stream at the same time which will cause corruption. 
+                //We need to create a new access token for each client that pastes the files to create multiple stream instances
+                currentOperation.HostFileAccessToken = GenerateLocalAccessTokenForOperation(currentOperation);
             }
             else
             {
-                currentData.HostFileAccessToken = await currentData.Host.RequestFileTokenAsync(operationId);
-                ISLogger.Write("Host file access token: " + currentData.HostFileAccessToken);
+                //Assign virtual file events, so if localhosts pastes the files then read data from the host.
+                foreach (var file in cbFiles.AllFiles)
+                {
+                    file.ReadComplete += File_ReadComplete;
+                    file.ReadDelegate = File_RequestDataAsync;
+                }
+
+                currentOperation.HostFileAccessToken = await currentOperation.Host.RequestFileTokenAsync(operationId);
             }
 
-            foreach(var file in cbFiles.AllFiles)
-            {
-                file.ReadComplete += File_ReadComplete;
-                file.ReadDelegate = File_RequestDataAsync;
-            }
-
-            SetLocalClipboardData(cbFiles);
+            BroadcastCurrentOperation();
         }
 
         private void File_ReadComplete(object sender, EventArgs e)
@@ -87,29 +92,57 @@ namespace InputshareLib.Server
 
         private async Task<byte[]> File_RequestDataAsync(Guid token, Guid fileId, int readLen)
         {
-            return await currentData.Host.RequestReadStreamAsync(token, fileId, readLen);
+            return await currentOperation.Host.RequestReadStreamAsync(token, fileId, readLen);
         }
 
         private void SetClipboardTextOrImage(ClipboardDataBase cbData, ISServerSocket host, Guid operationId)
         {
-            if (currentData != null)
-                previousOperationDictionary.Add(currentData.OperationId, currentData);
+            if (currentOperation != null)
+                previousOperationDictionary.Add(currentOperation.OperationId, currentOperation);
 
-            currentData = new ClipboardOperation(operationId, cbData.DataType, cbData, host);
+            currentOperation = new ClipboardOperation(operationId, cbData.DataType, cbData, host);
             BroadcastCurrentOperation();
         }
 
         private void BroadcastCurrentOperation()
         {
-            foreach(var client in clientMan.AllClients.Where(i => i != currentData.Host && i != ISServerSocket.Localhost))
+
+            //All clients that are not localhost or the clipboard data host
+            foreach(var client in clientMan.AllClients.Where(i => i != currentOperation.Host && i != ISServerSocket.Localhost))
             {
-                client.SendClipboardData(currentData.Data.ToBytes(), currentData.OperationId);
-                ISLogger.Write("Debug: Sent operation " + currentData.OperationId + " to " + client.ClientName);
+                client.SendClipboardData(currentOperation.Data.ToBytes(), currentOperation.OperationId);
+                ISLogger.Write("Debug: Sent operation " + currentOperation.OperationId + " to " + client.ClientName);
             }
-            SetLocalClipboardData(currentData.Data);
+
+            //only set local clipboard if localhost is not the data host
+            if (!currentOperation.Host.IsLocalhost)
+            {
+                SetLocalClipboardData(currentOperation.Data);
+            }
+            
         }
 
-        class ClipboardOperation
+        private Guid GenerateLocalAccessTokenForOperation(ClipboardOperation operation)
+        {
+            if (operation.DataType != ClipboardDataType.File)
+            {
+                throw new ArgumentException("DateType must be file");
+            }
+
+            ClipboardVirtualFileData file = operation.Data as ClipboardVirtualFileData;
+            Guid[] fIds = new Guid[file.AllFiles.Count];
+            string[] fSources = new string[file.AllFiles.Count];
+
+            for (int i = 0; i < file.AllFiles.Count; i++)
+            {
+                fIds[i] = file.AllFiles[i].FileRequestId;
+                fSources[i] = file.AllFiles[i].FullPath;
+            }
+
+            return fileController.CreateFileReadTokenForGroup(new FileAccessController.FileAccessInfo(fIds, fSources));
+        }
+
+        internal class ClipboardOperation
         {
             public ClipboardOperation(Guid operationId, ClipboardDataType dataType, ClipboardDataBase data, ISServerSocket host)
             {

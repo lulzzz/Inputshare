@@ -117,6 +117,12 @@ namespace InputshareLib.Server
             }
         }
 
+        /// <summary>
+        /// Begins a file dragdrop operation, and assigns an access token to the operation
+        /// </summary>
+        /// <param name="cbFiles"></param>
+        /// <param name="host"></param>
+        /// <param name="operationId"></param>
         private async void BeginFileOperation(ClipboardVirtualFileData cbFiles, ISServerSocket host, Guid operationId)
         {
             Guid fileAccesstoken = Guid.Empty;
@@ -284,7 +290,7 @@ namespace InputshareLib.Server
             //If the specified operation is the current operation, mark it as success only if it is in the dragging state
             if (currentOperation?.OperationId == operationId && currentOperation?.State == DragDropState.Dragging)
             {
-                ISLogger.Write("{0} marked current dragdrop operation success", sender.ClientName);
+                ISLogger.Write("{0} marked current dragdrop operation success... transfering files...", sender.ClientName);
                 currentOperation.State = DragDropState.TransferingFiles;
                 currentOperation.ReceiverClient = sender;
                 OnOperationChanged();
@@ -449,24 +455,8 @@ namespace InputshareLib.Server
         }
 
         private void OnOperationChanged()
-        {/*
-            if(currentOperation == null)
-            {
-                ISLogger.Write("current operation is null");
-                return;
-            }
+        {
 
-            List<DragDropOperation> inProgressOperations = new List<DragDropOperation>();
-
-            if (currentOperation.State != DragDropState.Complete)
-                inProgressOperations.Add(currentOperation);
-
-            foreach(var operation in previousOperationIds.Where(i => i.Value.State == DragDropState.Dragging || i.Value.State == DragDropState.TransferingFiles))
-            {
-                inProgressOperations.Add(operation.Value);
-            }
-
-            OperationUpdated?.Invoke(this, CurrentDragDropInfo.FromDragDropOperations(inProgressOperations.ToArray()));*/
         }
 
         private Guid GenerateLocalAccessTokenForOperation(DragDropOperation operation)
@@ -489,7 +479,7 @@ namespace InputshareLib.Server
             return fileController.CreateFileReadTokenForGroup(new FileAccessController.FileAccessInfo(fIds, fSources));
         }
 
-        public class DragDropOperation
+        internal class DragDropOperation
         {
             public DragDropOperation(ClipboardDataBase operationData, ISServerSocket host, Guid operationId)
             {

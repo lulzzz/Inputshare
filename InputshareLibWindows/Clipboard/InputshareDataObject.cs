@@ -44,7 +44,6 @@ namespace InputshareLibWindows.Clipboard
 
         public InputshareDataObject(List<ClipboardVirtualFileData.FileAttributes> files)
         {
-            ISLogger.Write("NEW INPUTSHARE DATA OBJECT");
             objectType = ClipboardDataType.File;
             fileDescriptorStream = GetFileDescriptor(files);
             foreach (var file in files)
@@ -299,14 +298,11 @@ namespace InputshareLibWindows.Clipboard
         public const int VARIANT_FALSE = 0;
         public const int VARIANT_TRUE = -1; 
 
-
-        // Clipboard formats used for cut/copy/drag operations
         public const string CFSTR_PREFERREDDROPEFFECT = "Preferred DropEffect";
         public const string CFSTR_PERFORMEDDROPEFFECT = "Performed DropEffect";
         public const string CFSTR_FILEDESCRIPTORW = "FileGroupDescriptorW";
         public const string CFSTR_FILECONTENTS = "FileContents";
 
-        // File Descriptor Flags
         public const Int32 FD_CLSID = 0x00000001;
         public const Int32 FD_SIZEPOINT = 0x00000002;
         public const Int32 FD_ATTRIBUTES = 0x00000004;
@@ -317,13 +313,11 @@ namespace InputshareLibWindows.Clipboard
         public const Int32 FD_PROGRESSUI = 0x00004000;
         public const Int32 FD_LINKUI = 0x00008000;
 
-        // Global Memory Flags
         public const Int32 GMEM_MOVEABLE = 0x0002;
         public const Int32 GMEM_ZEROINIT = 0x0040;
         public const Int32 GHND = (GMEM_MOVEABLE | GMEM_ZEROINIT);
         public const Int32 GMEM_DDESHARE = 0x2000;
 
-        // IDataObject constants
         public const Int32 DV_E_TYMED = unchecked((Int32)0x80040069);
 
 

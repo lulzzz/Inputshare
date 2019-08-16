@@ -26,7 +26,7 @@ namespace InputshareWindows
             string clientName = "";
             IPEndPoint address = null;
 
-            Console.WriteLine("Enter client name (leave blank to use machine name");
+            Console.WriteLine("Enter client name (leave blank to use machine name)");
             clientName = Console.ReadLine();
             if (string.IsNullOrEmpty(clientName))
                 clientName = Environment.MachineName;

@@ -72,7 +72,7 @@ namespace InputshareLib.Server
             ISLogger.Write("Starting server...");
 
             ddControllerV2 = new GlobalDragDropControllerV2(clientMan, dragDropMan, fileController);
-            cbController = new GlobalClipboardController(clientMan, SetClipboardData);
+            cbController = new GlobalClipboardController(clientMan, fileController, SetClipboardData);
 
             StartClientListener(new IPEndPoint(IPAddress.Any, port));
             StartInputManager();
@@ -410,14 +410,31 @@ namespace InputshareLib.Server
 
             try
             {
+
                 //We need to check if this token is associated with the drag drop operation file token.
                 //If it is, and localhost is not the host of the operation, then we need to request the data from the host
-                if (args.Token == ddControllerV2.currentOperation.RemoteFileAccessToken)
+                if (args.Token == ddControllerV2.currentOperation?.RemoteFileAccessToken)
                 {
-                    //if localhost is not the host of the dragdrop operation
+                    if(ddControllerV2.currentOperation?.ReceiverClient != client)
+                    {
+                        ISLogger.Write("Client {0} attempted to access dragdrop operation files when they are not the drop target", client.ClientName);
+                        client.SendStreamReadErrorResponse(args.NetworkMessageId, "Data has been dropped by another client");
+                        return;
+                    }
+
+
+                    //if localhost is not the host of the dragdrop operation, we need to get data from whichever client has the files
                     if (!ddControllerV2.currentOperation.Host.IsLocalhost)
                     {
                         ReplyWithExternalFileData(client, args.NetworkMessageId , args.Token, args.File, args.ReadLen);
+                        return;
+                    }
+                }else if(args.Token == cbController.currentOperation?.HostFileAccessToken)
+                {
+                    if(cbController.currentOperation?.DataType == ClipboardDataType.File && !cbController.currentOperation.Host.IsLocalhost)
+                    {
+                        ISLogger.Write("{0} request clipboard file data", client.ClientName);
+                        ReplyWithExternalFileData(client, args.NetworkMessageId, args.Token, args.File, args.ReadLen);
                         return;
                     }
                 }
