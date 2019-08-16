@@ -1,0 +1,68 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29111.141
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InputshareLib", "InputshareLib\InputshareLib.csproj", "{9099176C-96DD-438A-9542-B9AA32E2F7D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InputshareLibWindows", "InputshareLibWindows\InputshareLibWindows.csproj", "{46921911-92C7-407B-8CC2-9248CACABC62}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputshareWindows", "InputshareWindows\InputshareWindows.csproj", "{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Debug|x64.ActiveCfg = Debug|x64
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Debug|x64.Build.0 = Debug|x64
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Debug|x86.Build.0 = Debug|Any CPU
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Release|x64.ActiveCfg = Release|x64
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Release|x64.Build.0 = Release|x64
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Release|x86.ActiveCfg = Release|x86
+		{9099176C-96DD-438A-9542-B9AA32E2F7D9}.Release|x86.Build.0 = Release|x86
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Debug|x64.ActiveCfg = Debug|x64
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Debug|x64.Build.0 = Debug|x64
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Debug|x86.Build.0 = Debug|Any CPU
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Release|x64.ActiveCfg = Release|x64
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Release|x64.Build.0 = Release|x64
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Release|x86.ActiveCfg = Release|x86
+		{46921911-92C7-407B-8CC2-9248CACABC62}.Release|x86.Build.0 = Release|x86
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Debug|x64.ActiveCfg = Debug|x64
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Debug|x64.Build.0 = Debug|x64
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Debug|x86.Build.0 = Debug|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Release|x64.ActiveCfg = Release|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Release|x64.Build.0 = Release|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Release|x86.ActiveCfg = Release|Any CPU
+		{A6E5A0FF-BA2D-4C90-85FB-3C94A7776EDB}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {43839E46-D2AB-4742-B522-A0299CE6512E}
+	EndGlobalSection
+	GlobalSection(NDepend) = preSolution
+		Project = ".\Inputshare.ndproj"
+	EndGlobalSection
+EndGlobal
