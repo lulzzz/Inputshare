@@ -8,7 +8,7 @@ namespace InputshareWindows
         static void Main(string[] args)
         {
             ISLogger.EnableConsole = true;
-            ISLogger.EnableLogFile = true;
+            ISLogger.EnableLogFile = false;
             ISLogger.SetLogFileName("InputshareTest.log");
             ISLogger.PrefixCaller = false;
             ISLogger.PrefixTime = true;

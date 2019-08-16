@@ -116,7 +116,7 @@ namespace InputshareLib
                     LogCount++;
 
                     if (EnableLogFile && LogFilePath != null)
-                        File.AppendAllText(LogFilePath, message);
+                        File.AppendAllText(LogFilePath, message+"\n");
 
                     
 

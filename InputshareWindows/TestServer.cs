@@ -25,12 +25,16 @@ namespace InputshareWindows
 
             do
             {
-                Console.WriteLine("Enter port to start server: ");
-                string ptrStr = Console.ReadLine();
+                Console.WriteLine("Enter port to start server: (blank for 4441)");
+                string pStr = Console.ReadLine();
 
-                int.TryParse(ptrStr, out port);
+                if (string.IsNullOrEmpty(pStr))
+                    port = 4441;
+                else
+                    int.TryParse(pStr, out port);
                 Console.Clear();
             } while (port < 1 || port > 65535);
+
 
             Console.Clear();
 
@@ -50,10 +54,10 @@ namespace InputshareWindows
             }
 
             PrintHelp();
+            Thread.Sleep(250);
 
             while (server.Running)
             {
-                Console.Write("Inputshare server: ");
                 ExecCmd(Console.ReadLine());
             }
 

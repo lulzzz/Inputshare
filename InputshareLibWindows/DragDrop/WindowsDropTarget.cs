@@ -60,7 +60,6 @@ namespace InputshareLibWindows.DragDrop
             this.AllowTransparency = true;
             this.TransparencyKey = System.Drawing.Color.Red;
             this.BackColor = System.Drawing.Color.Red;
-            ISLogger.Write("Running on thread " + Thread.CurrentThread.ManagedThreadId);
         }
 
         private void WindowsDropTarget_FormClosed(object sender, FormClosedEventArgs e)

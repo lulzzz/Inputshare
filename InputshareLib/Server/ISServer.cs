@@ -366,27 +366,6 @@ namespace InputshareLib.Server
             client.DisplayConfiguration = new DisplayConfig(e.DisplayConfig);
             client.AcceptClient();
             ClientConnected?.Invoke(this, GenerateClientInfo(client));
-
-            if (client.ClientName.ToLower().Contains("8g9"))
-            {
-                SetClientEdge(client, Edge.Top, ISServerSocket.Localhost);
-
-            }
-            if (client.ClientName.ToLower().Contains("kg7"))
-            {
-                SetClientEdge(client, Edge.Top, ISServerSocket.Localhost);
-
-            }
-            if (client.ClientName.ToLower().Contains("qts"))
-            {
-                SetClientEdge(client, Edge.Left, ISServerSocket.Localhost);
-            }
-
-            if (client.ClientName.ToLower().Contains("linx"))
-            {
-                SetClientEdge(client, Edge.Bottom, ISServerSocket.Localhost);
-            }
-
         }
 
         private void CreateClientEventHandlers(ISServerSocket socket)
