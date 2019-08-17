@@ -13,7 +13,8 @@ Note 2: There is current no UI for this project, but will be added later in deve
 Note 3: The client is currently a placeholder while the server is being developed. When the server is at a reasonable state, a Windows service version of the client will be created to allow  more functionality (Alt+ctrl+delete, sending inputs to the login screen etc). A standalone client will also be created.
 
 ## Demo ##
-
+Quick demo:
+[![](http://img.youtube.com/vi/rlR89GpMeCE/0.jpg)](http://www.youtube.com/watch?v=rlR89GpMeCE "Inputshare demo")
 
 ## Requirements ##
 * Dotnet SDK 3-Preview8
