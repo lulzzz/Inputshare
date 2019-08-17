@@ -13,7 +13,7 @@ Note 2: There is current no UI for this project, but will be added later in deve
 Note 3: The client is currently a placeholder while the server is being developed. When the server is at a reasonable state, a Windows service version of the client will be created to allow  more functionality (Alt+ctrl+delete, sending inputs to the login screen etc). A standalone client will also be created.
 
 ## Demo ##
-![](https://giant.gfycat.com/AdeptDescriptiveGuillemot.webm)
+![demo gif](https://github.com/sbarrac1/Inputshare/blob/master/demo.gif)
 
 ## Requirements ##
 * Dotnet SDK 3-Preview8
@@ -57,3 +57,8 @@ The input client can also be switched via a hotkey. A hotkey is a normal key wit
 To assign a hotkey to a client, use the assign command with the client name. EG 'assign localhost'. After entering the command, the console will ask for a hotkey to be used for that client, the next key (that is not a modifier key) that is pressed will be assigned to the client.
 
 The current assigned hotkeys can be viewed via the list command.
+
+## Current issues ##
+* Copy/pasting files does not work yet.
+* Memory issues when dealing with copy/pasting images
+* Dragging images does not work, instead text is dragged.
