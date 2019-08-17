@@ -47,6 +47,7 @@ namespace InputshareLibWindows.Input
 
         public override void Start()
         {
+            SetProcessDPIAware();
             base.Start();
             hookWnd = new HookWindow("Inputmanager window");
             hookWnd.HandleCreated += HookWnd_HandleCreated;

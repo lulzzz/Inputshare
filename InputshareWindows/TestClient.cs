@@ -37,8 +37,7 @@ namespace InputshareWindows
                 Console.Write("Connect to: ");
                 string addr = Console.ReadLine();
 
-                if (string.IsNullOrEmpty(addr))
-                    address = new IPEndPoint(IPAddress.Parse("192.168.0.7"), 4441);
+
 
                 string[] parts = addr.Split(':');
                 if (parts.Length != 2)
