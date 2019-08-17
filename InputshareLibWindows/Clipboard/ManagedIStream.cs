@@ -1,17 +1,8 @@
 ﻿using InputshareLib;
 using InputshareLib.Clipboard.DataTypes;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using System.Security;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace InputshareLibWindows.Clipboard
 {

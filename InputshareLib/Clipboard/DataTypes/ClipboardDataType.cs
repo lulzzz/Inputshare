@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace InputshareLib.Clipboard.DataTypes
+﻿namespace InputshareLib.Clipboard.DataTypes
 {
     public enum ClipboardDataType
     {

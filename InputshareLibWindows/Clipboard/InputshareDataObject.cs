@@ -1,17 +1,13 @@
-﻿using System;
+﻿using InputshareLib;
+using InputshareLib.Clipboard.DataTypes;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Permissions;
-using System.Threading;
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using InputshareLibWindows.Native;
-using InputshareLib.Clipboard.DataTypes;
-using InputshareLib;
-using System.Drawing;
+using System.Windows.Forms;
 
 namespace InputshareLibWindows.Clipboard
 {
@@ -21,7 +17,7 @@ namespace InputshareLibWindows.Clipboard
         public event EventHandler<Guid> DropComplete;
 
         bool reportedSuccess = false;
-        private ClipboardDataType objectType;
+        public ClipboardDataType objectType { get; private set; }
 
         
         private Int32 m_lindex;

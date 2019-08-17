@@ -2,9 +2,7 @@
 using InputshareLib.Input.Hotkeys;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 
 namespace InputshareLib.Input
 {
@@ -147,6 +145,11 @@ namespace InputshareLib.Input
             ClientHotkeyPressed?.Invoke(this, client);
         }
 
+        /// <summary>
+        /// if true, Disables local input and fires the InputReceived event 
+        /// when an input is performed.
+        /// </summary>
+        /// <param name="block"></param>
         public abstract void SetInputBlocked(bool block);
         public virtual void Start()
         {

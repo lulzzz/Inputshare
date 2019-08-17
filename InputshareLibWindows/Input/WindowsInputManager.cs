@@ -4,16 +4,12 @@ using InputshareLib.Input;
 using InputshareLib.Input.Hotkeys;
 using InputshareLibWindows.Clipboard;
 using System;
-using System.Drawing;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows;
+using System.Threading.Tasks;
 using static InputshareLibWindows.Native.User32;
 using static InputshareLibWindows.Native.WindowMessages;
-using InputshareLibWindows.Output;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using System.IO;
 
 namespace InputshareLibWindows.Input
 {

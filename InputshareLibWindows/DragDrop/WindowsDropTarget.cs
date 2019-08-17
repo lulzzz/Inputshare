@@ -1,16 +1,12 @@
-﻿using InputshareLib;
-using InputshareLibWindows.Output;
+﻿using InputshareLibWindows.Output;
 using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Forms;
 using static InputshareLibWindows.Native.User32;
-using Size = System.Drawing.Size;
 using Point = System.Drawing.Point;
-using Application = System.Windows.Forms.Application;
+using Size = System.Drawing.Size;
 
 namespace InputshareLibWindows.DragDrop
 {
@@ -80,15 +76,9 @@ namespace InputshareLibWindows.DragDrop
             HandleCreatedEvent.Set();
         }
 
-
         private void WindowsDropForm_Shown(object sender, EventArgs e)
         {
             this.Hide();
-        }
-
-        public void SendExit()
-        {
-            InputshareLibWindows.Native.User32.PostMessage(new HandleRef(this, Handle), 16, IntPtr.Zero, IntPtr.Zero);
         }
 
         /// <summary>

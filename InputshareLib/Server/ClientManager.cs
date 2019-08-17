@@ -1,13 +1,11 @@
-﻿using InputshareLib.Net;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 
 namespace InputshareLib.Server
 {
-    class ClientManager
+    internal class ClientManager
     {
         /// <summary>
         /// Max clients allowed by the server

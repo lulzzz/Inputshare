@@ -3,9 +3,6 @@ using InputshareLib.Displays;
 using InputshareLib.DragDrop;
 using InputshareLib.Input;
 using InputshareLib.Output;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace InputshareLib.Server
 {

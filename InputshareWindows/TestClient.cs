@@ -1,8 +1,6 @@
 ﻿using InputshareLib.Client;
 using System;
-using System.Collections.Generic;
 using System.Net;
-using System.Text;
 using System.Threading;
 
 namespace InputshareWindows
@@ -113,7 +111,7 @@ namespace InputshareWindows
 
         private static void Client_ClipboardDataCopied(object sender, EventArgs e)
         {
-            Console.WriteLine("Global clipboard updated");
+            //Console.WriteLine("Global clipboard updated");
         }
 
         private static void Client_ActiveClientChanged(object sender, bool e)

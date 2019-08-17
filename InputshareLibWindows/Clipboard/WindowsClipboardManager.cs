@@ -2,10 +2,6 @@
 using InputshareLib.Clipboard;
 using InputshareLib.Clipboard.DataTypes;
 using System;
-using System.IO;
-using System.Windows;
-using DataObject = System.Windows.Forms.DataObject;
-using IDataObject = System.Windows.Forms.DataObject;
 
 namespace InputshareLibWindows.Clipboard
 {

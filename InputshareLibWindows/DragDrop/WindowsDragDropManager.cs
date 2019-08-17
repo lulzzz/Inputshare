@@ -21,7 +21,6 @@ namespace InputshareLibWindows.DragDrop
         public event EventHandler DragDropCancelled;
         public event EventHandler DragDropSuccess;
         public event EventHandler<Guid> DragDropComplete;
-
         private AutoResetEvent formLoadedEvent = new AutoResetEvent(false);
 
         public WindowsDragDropManager()
@@ -79,14 +78,11 @@ namespace InputshareLibWindows.DragDrop
                 dropTargetWindow.InputshareDataDropped = false;
                 return;
             }
-
-            ISLogger.Write("Reporting dragdrop success");
             DragDropSuccess?.Invoke(this, null);
         }
 
         private void DropSourceWindow_DragDropCancelled(object sender, EventArgs e)
         {
-            ISLogger.Write("Reporting dragdrop cancelled");
             DragDropCancelled?.Invoke(this, null);
         }
 

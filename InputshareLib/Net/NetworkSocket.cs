@@ -1,11 +1,8 @@
 ﻿using InputshareLib.Net.Messages;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -132,6 +129,9 @@ namespace InputshareLib.Net
         /// should be used when requesting to read from the remote filestream along with the GUID
         /// of the file that you want to read.
         /// </summary>
+        /// <exception cref="RemoteFileStreamReadFailedException"></exception>
+        /// <exception cref="InvalidNetworkResponseException"></exception>"
+        /// <exception cref="RequestTimedOutException"></exception>
         /// <param name="fileGroupId">The operation ID of the files to access</param>
         /// <returns></returns>
         public async Task<Guid> RequestFileTokenAsync(Guid fileGroupId)

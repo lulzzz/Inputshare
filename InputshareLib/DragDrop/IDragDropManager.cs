@@ -1,8 +1,5 @@
 ﻿using InputshareLib.Clipboard.DataTypes;
-using InputshareLib.Input;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace InputshareLib.DragDrop
 {

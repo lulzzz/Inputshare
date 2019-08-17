@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using InputshareLib.Net;
+using InputshareLib.Net.Messages;
+using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using InputshareLib.Net.Messages;
 
-namespace InputshareLib.Net
+namespace InputshareLib.Client
 {
     internal class ISClientSocket : NetworkSocket
     {
@@ -200,6 +198,9 @@ namespace InputshareLib.Net
             }else if(type == MessageType.ClientEdgeStates)
             {
                 HandleEdgesChangedMessage(new ClientEdgesStateMessage(data));
+            }else if(type == MessageType.CancelAnyDragDrop)
+            {
+                CancelAnyDragDrop?.Invoke(this, null);
             }
                 
         }

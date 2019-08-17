@@ -4,8 +4,6 @@ using InputshareLib.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace InputshareLib.Server
@@ -16,12 +14,12 @@ namespace InputshareLib.Server
     /// </summary>
     class GlobalDragDropControllerV2
     {
-        private ClientManager clientMan;
-        private IDragDropManager ddManager;
-        private FileAccessController fileController;
+        private readonly ClientManager clientMan;
+        private readonly IDragDropManager ddManager;
+        private readonly FileAccessController fileController;
 
-        private Dictionary<Guid, DragDropOperation> previousOperationIds = new Dictionary<Guid, DragDropOperation>();
-        public DragDropOperation currentOperation { get; private set; }
+        private readonly Dictionary<Guid, DragDropOperation> previousOperationIds = new Dictionary<Guid, DragDropOperation>();
+        public DragDropOperation CurrentOperation { get; private set; }
         private ISServerSocket currentInputClient = ISServerSocket.Localhost;
         public GlobalDragDropControllerV2(ClientManager clientManager, IDragDropManager dropManager, FileAccessController fileAccessController)
         {
@@ -42,7 +40,7 @@ namespace InputshareLib.Server
         {
             ISLogger.Write("DragDropController: Localhost drop success");
             //TODO - should this just be current operation ID?
-            OnDropSuccess(ISServerSocket.Localhost, currentOperation.OperationId);
+            OnDropSuccess(ISServerSocket.Localhost, CurrentOperation.OperationId);
         }
 
         private void DdManager_DragDropComplete(object sender, Guid operationId)
@@ -54,7 +52,7 @@ namespace InputshareLib.Server
         private void DdManager_DragDropCancelled(object sender, EventArgs e)
         {
             ISLogger.Write("DragDropController: Localhost drop cancelled");
-            OnDropCancel(ISServerSocket.Localhost, currentOperation.OperationId);
+            OnDropCancel(ISServerSocket.Localhost, CurrentOperation.OperationId);
         }
 
         private void DdManager_DataDropped(object sender, ClipboardDataBase cbData)
@@ -99,7 +97,7 @@ namespace InputshareLib.Server
                 return;
             }
 
-            if(currentOperation != null && currentOperation.State == DragDropState.Dragging)
+            if(CurrentOperation != null && CurrentOperation.State == DragDropState.Dragging)
             {
                 ISLogger.Write("DragDropController: Cannot begin operation: another operation is currently dragging");
                 return;
@@ -152,19 +150,19 @@ namespace InputshareLib.Server
             }
 
             //If the previous dragdrop operation is still transfering files, store it so that the files can keep being transfered
-            if (currentOperation != null && currentOperation.State == DragDropState.TransferingFiles)
-                previousOperationIds.Add(currentOperation.OperationId, currentOperation);
+            if (CurrentOperation != null && CurrentOperation.State == DragDropState.TransferingFiles)
+                previousOperationIds.Add(CurrentOperation.OperationId, CurrentOperation);
 
             //Sets the new operation, which is automatically set to dragging state
-            currentOperation = newOperation;
+            CurrentOperation = newOperation;
 
             if (currentInputClient.IsLocalhost)
             {
-                ddManager.DoDragDrop(currentOperation.OperationData);
+                ddManager.DoDragDrop(CurrentOperation.OperationData);
             }
             else
             {
-                currentInputClient.SendDragDropData(currentOperation.OperationData.ToBytes(), currentOperation.OperationId);
+                currentInputClient.SendDragDropData(CurrentOperation.OperationData.ToBytes(), CurrentOperation.OperationId);
             }
         }
 
@@ -179,7 +177,7 @@ namespace InputshareLib.Server
             ClipboardVirtualFileData.FileAttributes file = sender as ClipboardVirtualFileData.FileAttributes;
             ISLogger.Write("DragDropController: File {0} read", file.FileName);
             
-            if(currentOperation.RemoteFileAccessToken != file.RemoteAccessToken)
+            if(CurrentOperation.RemoteFileAccessToken != file.RemoteAccessToken)
             {
                 if (previousOperationIds.ContainsKey(file.FileOperationId))
                 {
@@ -201,20 +199,20 @@ namespace InputshareLib.Server
             }
             else
             {
-                currentOperation.Host.RequestCloseStream(file.RemoteAccessToken, file.FileRequestId);
+                CurrentOperation.Host.RequestCloseStream(file.RemoteAccessToken, file.FileRequestId);
             }
         }
 
         private void BeginTextOrImageOperation(ClipboardDataBase cbData)
         { 
             //If the previous dragdrop operation is still transfering files, store it so that the files can keep being transfered
-            if (currentOperation != null && currentOperation.State == DragDropState.TransferingFiles)
-                previousOperationIds.Add(currentOperation.OperationId, currentOperation);
+            if (CurrentOperation != null && CurrentOperation.State == DragDropState.TransferingFiles)
+                previousOperationIds.Add(CurrentOperation.OperationId, CurrentOperation);
             
             
             //Create a new operation with the text/image data, we don't care about the ID or host
             //as text and image data is not streamed the same way as file data. Text/Image data are sent as a single block
-            currentOperation = new DragDropOperation(cbData, null, Guid.NewGuid());
+            CurrentOperation = new DragDropOperation(cbData, null, Guid.NewGuid());
 
             if (currentInputClient.IsLocalhost)
             {
@@ -223,7 +221,7 @@ namespace InputshareLib.Server
             else
             {
                 ISLogger.Write("Sending dragdrop type {0} to {1}", cbData.DataType, currentInputClient.ClientName);
-                currentInputClient.SendDragDropData(cbData.ToBytes(), currentOperation.OperationId);
+                currentInputClient.SendDragDropData(cbData.ToBytes(), CurrentOperation.OperationId);
             }
 
             
@@ -237,21 +235,21 @@ namespace InputshareLib.Server
                 return;
             }
 
-            if(operationId == currentOperation?.OperationId)
+            if(operationId == CurrentOperation?.OperationId)
             {
                 ISLogger.Write("DragDropController: {0} cancelled current operation", sender.ClientName);
-                currentOperation.State = DragDropState.Cancelled;
+                CurrentOperation.State = DragDropState.Cancelled;
                 //Make sure all clients release any files that are currently being dragged
                 CancelAllDragDrops();
 
-                if (currentOperation != null && currentOperation.Host != null && currentOperation.Host.IsLocalhost)
+                if (CurrentOperation != null && CurrentOperation.Host != null && CurrentOperation.Host.IsLocalhost)
                 {
-                    fileController.DeleteToken(currentOperation.RemoteFileAccessToken);
+                    fileController.DeleteToken(CurrentOperation.RemoteFileAccessToken);
                 }
-                else if(currentOperation != null && currentOperation.Host != null && !currentOperation.Host.IsLocalhost)
+                else if(CurrentOperation != null && CurrentOperation.Host != null && !CurrentOperation.Host.IsLocalhost)
                 {
                     //Tells the host client to close all filestreams for this operation
-                    currentOperation.Host.SendDragDropComplete(operationId);
+                    CurrentOperation.Host.SendDragDropComplete(operationId);
                 }
                 OnOperationChanged();
             }
@@ -264,7 +262,7 @@ namespace InputshareLib.Server
 
                     if (operation.Host.IsLocalhost && operation.DataType == ClipboardDataType.File)
                     {
-                        fileController.DeleteToken(currentOperation.RemoteFileAccessToken);
+                        fileController.DeleteToken(CurrentOperation.RemoteFileAccessToken);
                     }
                     else if(operation.DataType == ClipboardDataType.File)
                     {
@@ -288,21 +286,21 @@ namespace InputshareLib.Server
 
 
             //If the specified operation is the current operation, mark it as success only if it is in the dragging state
-            if (currentOperation?.OperationId == operationId && currentOperation?.State == DragDropState.Dragging)
+            if (CurrentOperation?.OperationId == operationId && CurrentOperation?.State == DragDropState.Dragging)
             {
-                ISLogger.Write("{0} marked current dragdrop operation success... transfering files...", sender.ClientName);
-                currentOperation.State = DragDropState.TransferingFiles;
-                currentOperation.ReceiverClient = sender;
+                ISLogger.Write("{0} marked current dragdrop operation success...", sender.ClientName);
+                CurrentOperation.State = DragDropState.TransferingFiles;
+                CurrentOperation.ReceiverClient = sender;
                 OnOperationChanged();
             }
-            else if (currentOperation.OperationId == operationId && currentOperation.State != DragDropState.Dragging)
+            else if (CurrentOperation.OperationId == operationId && CurrentOperation.State != DragDropState.Dragging)
             {
-                ISLogger.Write("DragDropController: {0} attempted to send drop success when specified operationstate is {1}!", sender.ClientName, currentOperation.State);
+                ISLogger.Write("DragDropController: {0} attempted to send drop success when specified operationstate is {1}!", sender.ClientName, CurrentOperation.State);
                 return;
             }
 
             //If it is not the current operation, check if it a previous operation, if so mark as transferingfiles
-            if (currentOperation?.OperationId != operationId)
+            if (CurrentOperation?.OperationId != operationId)
             {
                 if (previousOperationIds.ContainsKey(operationId))
                 {
@@ -325,7 +323,7 @@ namespace InputshareLib.Server
                 }
             }
 
-            currentOperation.State = DragDropState.TransferingFiles;
+            CurrentOperation.State = DragDropState.TransferingFiles;
         }
 
         /// <summary>
@@ -337,14 +335,14 @@ namespace InputshareLib.Server
         /// <param name="sender"></param>
         private void OnDropComplete(ISServerSocket sender, Guid operationId)
         {
-            if(currentOperation.OperationId == operationId)
+            if(CurrentOperation.OperationId == operationId)
             {
                 ISLogger.Write("Current dragdrop operation marked as complete by " + sender.ClientName);
-                currentOperation.State = DragDropState.Complete;
+                CurrentOperation.State = DragDropState.Complete;
                 CancelAllDragDrops();
 
                 //Let the host know that it can now close all streams and delete access token
-                currentOperation.Host.SendDragDropComplete(operationId);
+                CurrentOperation.Host.SendDragDropComplete(operationId);
                 OnOperationChanged();
             }
             else
@@ -387,29 +385,30 @@ namespace InputshareLib.Server
             currentInputClient = newClient;
 
             //if moving from localhost to client, check for drop if not in operation, Only do this if the left mouse button is down
-            if (oldClient.IsLocalhost && currentOperation?.State != DragDropState.Dragging && ddManager.LeftMouseState)
+            if (oldClient.IsLocalhost && CurrentOperation?.State != DragDropState.Dragging && ddManager.LeftMouseState)
                 ddManager.CheckForDrop();
 
-            if (currentOperation == null)
+            if (CurrentOperation == null)
                 return;
 
             //If we are dragging a file, make sure that we don't send the dragdrop back to the host
             //as this causes issues
-            if (currentOperation.DataType == ClipboardDataType.File)
-                if (newClient == currentOperation.Host)
+            if (CurrentOperation.DataType == ClipboardDataType.File && CurrentOperation.State == DragDropState.Dragging)
+                if (newClient == CurrentOperation.Host)
+                {
+                    ISLogger.Write("Dragdrop returned to sender... cancelling");
+                    OnDropCancel(newClient, CurrentOperation.OperationId);
                     return;
+                }
 
-            if (currentOperation.State == DragDropState.Dragging)
+            if (CurrentOperation.State == DragDropState.Dragging)
                 if (newClient.IsLocalhost)
-                    ddManager.DoDragDrop(currentOperation.OperationData);
+                    ddManager.DoDragDrop(CurrentOperation.OperationData);
 
             //if we are dragging a file, send the dragdrop data to the client
-            if(currentOperation.State == DragDropState.Dragging)
+            if(CurrentOperation.State == DragDropState.Dragging)
                 if (!newClient.IsLocalhost)
-                    newClient.SendDragDropData(currentOperation.OperationData.ToBytes(), currentOperation.OperationId);
-
-            //Just a check to make sure that all other clients discard the last dragdrop
-            CancelAllDragDrops(newClient);
+                    newClient.SendDragDropData(CurrentOperation.OperationData.ToBytes(), CurrentOperation.OperationId);
         }
 
         bool reportedSuccess = false;
@@ -426,12 +425,12 @@ namespace InputshareLib.Server
             if (!reportedSuccess)
             {
                 reportedSuccess = true;
-                currentOperation.State = DragDropState.TransferingFiles;
+                CurrentOperation.State = DragDropState.TransferingFiles;
             }
 
             try
             {
-                return await currentOperation.Host.RequestReadStreamAsync(token, fileId, readLen);
+                return await CurrentOperation.Host.RequestReadStreamAsync(token, fileId, readLen);
             }
             catch (Exception ex)
             {

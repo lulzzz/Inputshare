@@ -2,9 +2,7 @@
 using InputshareLib.Input;
 using InputshareLib.Output;
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using static InputshareLibWindows.Native.User32;
 
 namespace InputshareLibWindows.Output

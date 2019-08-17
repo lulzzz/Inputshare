@@ -3,14 +3,11 @@ using InputshareLib.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace InputshareLib.Server
 {
-    //TODO - write this properly
-    class GlobalClipboardController
+    internal class GlobalClipboardController
     {
         public delegate void SetClipboardDataDelegate(ClipboardDataBase cbData);
 
@@ -111,7 +108,6 @@ namespace InputshareLib.Server
             foreach(var client in clientMan.AllClients.Where(i => i != currentOperation.Host && i != ISServerSocket.Localhost))
             {
                 client.SendClipboardData(currentOperation.Data.ToBytes(), currentOperation.OperationId);
-                ISLogger.Write("Debug: Sent operation " + currentOperation.OperationId + " to " + client.ClientName);
             }
 
             //only set local clipboard if localhost is not the data host
@@ -122,6 +118,7 @@ namespace InputshareLib.Server
             
         }
 
+        
         private Guid GenerateLocalAccessTokenForOperation(ClipboardOperation operation)
         {
             if (operation.DataType != ClipboardDataType.File)

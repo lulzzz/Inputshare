@@ -3,10 +3,6 @@ using InputshareLib.Cursor;
 using InputshareLib.Displays;
 using InputshareLib.DragDrop;
 using InputshareLib.Output;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace InputshareLib.Client
 {
     public class ClientDependencies

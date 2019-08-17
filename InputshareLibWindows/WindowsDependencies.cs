@@ -6,9 +6,6 @@ using InputshareLibWindows.Displays;
 using InputshareLibWindows.DragDrop;
 using InputshareLibWindows.Input;
 using InputshareLibWindows.Output;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace InputshareLibWindows
 {

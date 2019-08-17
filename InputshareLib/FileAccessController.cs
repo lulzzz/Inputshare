@@ -1,9 +1,6 @@
-﻿
-using InputshareLib.Net;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace InputshareLib
 {
@@ -14,6 +11,11 @@ namespace InputshareLib
     {
         private Dictionary<Guid, AccessToken> currentAccessTokens = new Dictionary<Guid, AccessToken>();
 
+        /// <summary>
+        /// An access token allows a client/server to access a specific instance of a filestream. each file in 
+        /// a dragdrop or clipboard operation has a unique fileid that is generated when the file is copied/dragged.
+        /// 
+        /// </summary>
         private class AccessToken
         {
             public AccessToken(Guid tokenId, Guid[] allowedFiles, string[] allowedFileSources)

@@ -5,21 +5,17 @@ using InputshareLibWindows.Native;
 using InputshareLibWindows.Output;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using static InputshareLibWindows.Native.Ole32;
 using static InputshareLibWindows.Native.User32;
-using Size = System.Drawing.Size;
 using DataObject = System.Windows.Forms.DataObject;
 using DragDropEffects = System.Windows.Forms.DragDropEffects;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using System.IO;
-using System.Text;
-using System.Drawing;
 using Point = System.Drawing.Point;
-using Application = System.Windows.Forms.Application;
+using Size = System.Drawing.Size;
 
 namespace InputshareLibWindows.DragDrop
 {
@@ -120,11 +116,14 @@ namespace InputshareLibWindows.DragDrop
             {
                 nativeObject = ClipboardTranslatorWindows.ConvertToWindows(data);
 
-                byte[] inputshareData = Encoding.UTF8.GetBytes("InputshareDragDropData");
-                MemoryStream ms = new MemoryStream(inputshareData);
-                nativeObject.SetData("InputshareData", inputshareData);
+                nativeObject.SetData("InputshareData", new bool());
                 dropQueue.Enqueue(nativeObject);
-                nativeObject.DropComplete += NativeObject_DropComplete;
+
+                //File drops are marked as success when the shell starts to read the first file,
+                //sending an event here will just send a duplicate notification when the dragdrop completes.
+                if(nativeObject.objectType!= ClipboardDataType.File)
+                    nativeObject.DropComplete += NativeObject_DropComplete;
+
                 nativeObject.DropSuccess += NativeObject_DropSuccess;
             }
             catch(Exception ex)

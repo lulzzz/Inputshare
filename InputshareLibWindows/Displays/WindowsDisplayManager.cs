@@ -1,13 +1,9 @@
-﻿using System;
+﻿using InputshareLib.Displays;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows;
 using System.Windows.Forms;
-using InputshareLib;
-using InputshareLib.Displays;
-using InputshareLibWindows.Native;
 using static InputshareLibWindows.Native.User32;
 
 namespace InputshareLibWindows.Displays

@@ -3,26 +3,20 @@ using InputshareLib.Input;
 using InputshareLib.Input.Hotkeys;
 using InputshareLib.Server;
 using InputshareLibWindows;
-using InputshareLibWindows.Cursor;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
-using System.Windows.Forms;
 
 namespace InputshareWindows
 {
     public static class TestServer
     {
         static ISServer server;
-        static Dictionary<string, Action<string[]>> commandDictionary = new Dictionary<string, Action<string[]>>();
 
         public static void Run()
         {
             Console.Clear();
 
             int port = 0;
-
             do
             {
                 Console.WriteLine("Enter port to start server: (blank for 4441)");

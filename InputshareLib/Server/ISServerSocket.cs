@@ -1,14 +1,13 @@
 ﻿using InputshareLib.Input.Hotkeys;
+using InputshareLib.Net;
 using InputshareLib.Net.Messages;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using static InputshareLib.Displays.DisplayManagerBase;
 
-namespace InputshareLib.Net
+namespace InputshareLib.Server
 {
     /// <summary>
     /// Represents a client connected to the inputshare server
