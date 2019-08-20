@@ -13,7 +13,9 @@ namespace InputshareLib.Native.Linux
         public static extern void XCloseDisplay(IntPtr display);
 
         [DllImport("libX11.so.6")]
-        public static extern uint XKeysymToKeycode(IntPtr display, int keysym);
+        public static extern uint XKeysymToKeycode(IntPtr display, IntPtr keysym);
+
+        public static uint XKeysymToKeycode(IntPtr display, int keysym) { return XKeysymToKeycode(display, (IntPtr)keysym); }
 
         [DllImport("libX11.so.6")]
         public static extern IntPtr XFlush(IntPtr display);

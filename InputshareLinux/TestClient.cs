@@ -64,10 +64,7 @@ namespace InputshareLinux
                 {
                     IPEndPoint.TryParse(addr, out address);
                 }
-
-               
             }
-
 
             Console.WriteLine("Connecting to " + address.ToString());
             client.Connect(address.Address.ToString(), address.Port, name, Guid.NewGuid());

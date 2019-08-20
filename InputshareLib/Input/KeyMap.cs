@@ -19,9 +19,7 @@ namespace InputshareLib.Input
             XlibKeySym k = (XlibKeySym)t;
 
             Console.WriteLine("Windows {0} ({1}) => Xlib {2} ({3})", key, (int)key, k, (int)k);
-
-           
-
+            
             return k;
 
         }

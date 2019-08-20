@@ -79,10 +79,10 @@ namespace InputshareLib.Input
         X = 0x0058,
         Y = 0x0059,
         Z = 0x005a,
-        //LeftWindows = 0xff5b,
-        //RightWindows = 0xff5c,
-        //Application = 0xff5d,
-        //Sleep
+        LeftWindows = 0xffeb, //SUPER_L | SUPER_R
+        RightWindows = 0xffec,
+        Application = 0x1008FF1A, //unsure
+        Sleep = 0x1008FF2F,
         Numpad0 = 0xffb0,
         Numpad1 = 0xffb1,
         Numpad2 = 0xffb2,
@@ -138,24 +138,24 @@ namespace InputshareLib.Input
         RightControl = 0xffe4,
         LeftMenu = 0xffe9,
         RightMenu = 0xffea,
-        //BrowserBack 
-        //BrowserForward
-        //BrowserRefresh
-        //BrowserStop
-        //BrowserSearch
-        //BrowserFavorites
-        //BrowserHome
-        //VolumeMute
-        //VolumeDown
-        //VolumeUp
-        //MediaNextTrack = 0xB0,
-        //MediaPrevTrack = 0xB1,
-        //MediaStop = 0xB2,
-        //MediaPlayPause = 0xB3,
-        //LaunchMail = 0xB4,
-        //LaunchMediaSelect = 0xB5,
-        //LaunchApplication1 = 0xB6,
-        //LaunchApplication2 = 0xB7,
+        BrowserBack = 0x1008FF26,
+        BrowserForward = 0x1008FF27,
+        BrowserRefresh = 0x1008FF29,
+        BrowserStop = 0x1008FF28,
+        BrowserSearch = 0x1008FF1B, //unsure
+        BrowserFavorites = 0x1008FF30, //unsure
+        BrowserHome = 0x1008FF18,
+        VolumeMute = 0x1008FF12,
+        VolumeDown = 0x1008FF11,
+        VolumeUp = 0x1008FF13,
+        MediaNextTrack = 0x1008FF17,
+        MediaPrevTrack = 0x1008FF16,
+        MediaStop = 0x1008FF15,
+        MediaPlayPause = 0x1008FF14, //todo - not sure if correct
+        LaunchMail = 0x1008FF19,
+        LaunchMediaSelect = 0x1008FF32, //unsure
+        LaunchApplication1 = 0x1008FF40, //unsure
+        LaunchApplication2 = 0x1008FF41, //unsure
         //OEM1 = 0xBA,
         //OEMPlus = 0xBB,
         //OEMComma = 0xBC,
