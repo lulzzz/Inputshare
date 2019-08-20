@@ -14,7 +14,7 @@ namespace InputshareLibWindows.Clipboard
             InputshareDataObject obj = null;
             try
             {
-                obj = ClipboardTranslatorWindows.ConvertToWindows(data);
+                obj = WindowsClipboardTranslator.ConvertToWindows(data);
             }
             catch(Exception ex)
             {
@@ -27,7 +27,7 @@ namespace InputshareLibWindows.Clipboard
 
         private void HookWnd_ClipboardCallback(System.Windows.Forms.IDataObject data)
         {
-            ClipboardDataBase cb = ClipboardTranslatorWindows.ConvertToGeneric(data);
+            ClipboardDataBase cb = WindowsClipboardTranslator.ConvertToGeneric(data);
             OnClipboardDataChanged(cb);
         }
 

@@ -14,9 +14,9 @@ using FileAttributes = InputshareLib.Clipboard.DataTypes.ClipboardVirtualFileDat
 namespace InputshareLibWindows.Clipboard
 {
     /// <summary>
-    /// Extension of InputshareLib.Clipboard.ClipboardTranslator using the windows IDataObject interface
+    /// Extension of InputshareLib.Clipboard.ClipboardTranslator using iputsharedataobject interface
     /// </summary>
-    public static class ClipboardTranslatorWindows
+    public static class WindowsClipboardTranslator
     {
 
         /// <summary>

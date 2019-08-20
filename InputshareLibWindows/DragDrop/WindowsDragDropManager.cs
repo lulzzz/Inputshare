@@ -98,7 +98,7 @@ namespace InputshareLibWindows.DragDrop
 
         private void DropForm_DataDropped(object sender, IDataObject data)
         {
-            ClipboardDataBase cb = ClipboardTranslatorWindows.ConvertToGeneric(data);
+            ClipboardDataBase cb = WindowsClipboardTranslator.ConvertToGeneric(data);
             DataDropped?.Invoke(this, cb);
         }
 

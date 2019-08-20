@@ -181,7 +181,7 @@ namespace InputshareLib.Server
                     inputMan.Stop();
                 if (displayMan.Running)
                     displayMan.StopMonitoring();
-                if (curMon.Monitoring)
+                if (curMon.Running)
                     curMon.StopMonitoring();
                 if (dragDropMan.Running)
                     dragDropMan.Stop();
@@ -226,7 +226,7 @@ namespace InputshareLib.Server
             ISServerSocket oldClient = inputClient;
 
             //We dont care where the local cursor position is 
-            if (curMon.Monitoring)
+            if (curMon.Running)
                 curMon.StopMonitoring();
 
             client.NotifyActiveClient(true);
@@ -262,7 +262,7 @@ namespace InputshareLib.Server
             //enable local input
             inputMan.SetInputBlocked(false);
 
-            if (!curMon.Monitoring)
+            if (!curMon.Running)
                 curMon.StartMonitoring(displayMan.CurrentConfig.VirtualBounds);
 
 

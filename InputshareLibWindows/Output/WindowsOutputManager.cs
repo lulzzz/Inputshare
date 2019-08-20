@@ -9,6 +9,8 @@ namespace InputshareLibWindows.Output
 {
     public class WindowsOutputManager : IOutputManager
     {
+        public bool Running { get; private set; }
+
         public void Send(ISInputData input)
         {
             ISInputCode c = input.Code;
@@ -333,6 +335,16 @@ namespace InputshareLibWindows.Output
             SendInput(1, new Input[1] { mouseIn }, InputSize);
         }
 
+        public void Start()
+        {
+            Running = true;
+        }
+
+        public void Stop()
+        {
+            Running = false;
+        }
+
         public void ResetKeyStates()
         {
             if(((1 << 15) & GetAsyncKeyState(1)) != 0)
@@ -354,6 +366,8 @@ namespace InputshareLibWindows.Output
 
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(int vkey);
+
+       
 
         static int InputSize = Marshal.SizeOf(typeof(Input));
 
@@ -378,6 +392,7 @@ namespace InputshareLibWindows.Output
         const int MOUSEEVENTF_VIRTUALDESK = 0x4000;
         const int MOUSEEVENTF_ABSOLUTE = 0x8000;
 
+       
 
         [Flags]
         private enum InputType

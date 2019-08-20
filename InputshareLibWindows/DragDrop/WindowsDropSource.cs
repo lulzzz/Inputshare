@@ -114,7 +114,7 @@ namespace InputshareLibWindows.DragDrop
             InputshareDataObject nativeObject = null;
             try
             {
-                nativeObject = ClipboardTranslatorWindows.ConvertToWindows(data);
+                nativeObject = WindowsClipboardTranslator.ConvertToWindows(data);
 
                 nativeObject.SetData("InputshareData", new bool());
                 dropQueue.Enqueue(nativeObject);

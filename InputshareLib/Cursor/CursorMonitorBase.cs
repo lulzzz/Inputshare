@@ -7,7 +7,7 @@ namespace InputshareLib.Cursor
     {
         public event EventHandler<Edge> EdgeHit;
         protected Rectangle virtualDisplayBounds;
-        public bool Monitoring { get; protected set; }
+        public bool Running { get; protected set; }
         public abstract void StartMonitoring(Rectangle bounds);
         public abstract void StopMonitoring();
         public virtual void SetBounds(Rectangle bounds)

@@ -92,11 +92,12 @@ namespace InputshareLib.Client
         {
             if (displayMan.Running)
                 displayMan.StopMonitoring();
-            if (curMon.Monitoring)
+            if (curMon.Running)
                 curMon.StopMonitoring();
             if (clipboardMan.Running)
                 clipboardMan.Stop();
-
+            if (outMan.Running)
+                outMan.Stop();
             socket?.Close();
         }
 
@@ -114,6 +115,7 @@ namespace InputshareLib.Client
             displayMan.StartMonitoring();
             displayMan.DisplayConfigChanged += OnLocalDisplayConfigChange;
             displayMan.UpdateConfigManual();
+            outMan.Start();
             curMon.EdgeHit += OnLocalEdgeHit;
             clipboardMan.Start();
             clipboardMan.ClipboardContentChanged += OnLocalClipboardChange;
@@ -122,6 +124,7 @@ namespace InputshareLib.Client
             dragDropMan.DragDropCancelled += ddController.Local_DragDropCancelled;
             dragDropMan.DragDropComplete += ddController.Local_DragDropComplete;
             dragDropMan.DataDropped += ddController.Local_DataDropped;
+            curMon.StartMonitoring(displayMan.CurrentConfig.VirtualBounds);
         }
 
         private void OnLocalClipboardChange(object sender, ClipboardDataBase data)
@@ -301,15 +304,15 @@ namespace InputshareLib.Client
             ActiveClient = active;
             if (active)
             {
-                if (!curMon.Monitoring)
-                    curMon.StartMonitoring(displayMan.CurrentConfig.VirtualBounds);
+               // if (!curMon.Running)
+                   // curMon.StartMonitoring(displayMan.CurrentConfig.VirtualBounds);
 
                 outMan.ResetKeyStates();
             }
             else
             {
-                if (curMon.Monitoring)
-                    curMon.StopMonitoring();
+               // if (curMon.Running)
+                  //  curMon.StopMonitoring();
 
                 outMan.ResetKeyStates();
             }
@@ -329,7 +332,7 @@ namespace InputshareLib.Client
 
         private void OnConnectionError(object sender, string reason)
         {
-            if (curMon.Monitoring)
+            if (curMon.Running)
                 curMon.StopMonitoring();
 
             ISLogger.Write("Connection error: " + reason);

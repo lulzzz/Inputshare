@@ -165,7 +165,7 @@ namespace InputshareLibWindows.Input
             {
                 //This callback still running on the window thread, as otherwise we could not access 
                 //the dataobject
-                ClipboardDataBase cb = ClipboardTranslatorWindows.ConvertToGeneric(data);
+                ClipboardDataBase cb = WindowsClipboardTranslator.ConvertToGeneric(data);
                 Task.Run(() =>
                 {
                     ClipboardDataChanged?.Invoke(this, cb);
@@ -371,7 +371,7 @@ namespace InputshareLibWindows.Input
         #region clipboard
         public override void SetClipboardData(ClipboardDataBase cbData)
         {
-            hookWnd.SetClipboardData(ClipboardTranslatorWindows.ConvertToWindows(cbData));
+            hookWnd.SetClipboardData(WindowsClipboardTranslator.ConvertToWindows(cbData));
         }
 
         #endregion
