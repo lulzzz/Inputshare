@@ -82,11 +82,30 @@ namespace InputshareLib.Output
             }
             else if (input.Code == ISInputCode.IS_KEYDOWN)
             {
-                XTestFakeKeyEvent(xDisplay, (uint)input.Param2, true, 0);
+                try
+                {
+                    XlibKeySym key = KeyMap.WinToXlib((WindowsVirtualKey)input.Param1);
+                    uint k = XKeysymToKeycode(xDisplay, (int)key);
+                    XTestFakeKeyEvent(xDisplay, k, true, 0);
+                }catch(Exception ex)
+                {
+                    ISLogger.Write("XlibOutputManager: Error sending key: " + ex.Message);
+                }
+               
             }
             else if (input.Code == ISInputCode.IS_KEYUP)
             {
-                XTestFakeKeyEvent(xDisplay, (uint)input.Param2, false, 0);
+                try
+                {
+                    XlibKeySym key = KeyMap.WinToXlib((WindowsVirtualKey)input.Param1);
+                    uint k = XKeysymToKeycode(xDisplay, (int)key);
+                    XTestFakeKeyEvent(xDisplay, k, false, 0);
+                }
+                catch (Exception ex)
+                {
+                    ISLogger.Write("XlibOutputManager: Error sending key: " + ex.Message);
+                }
+
             }
 
             XFlush(xDisplay);

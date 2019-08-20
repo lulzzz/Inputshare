@@ -40,20 +40,20 @@ namespace InputshareLib
         {
             try
             {
-                if (!Directory.Exists(GetTempPath() + @"\sbarrac1"))
+                if (!Directory.Exists(GetTempPath() + @"/sbarrac1"))
                 {
-                    Directory.CreateDirectory(GetTempPath() + @"\sbarrac1\inputshare");
-                }else if(!Directory.Exists(GetTempPath() + @"\sbarrac1\inputshare"))
+                    Directory.CreateDirectory(GetTempPath() + @"/sbarrac1/inputshare");
+                }else if(!Directory.Exists(GetTempPath() + @"/sbarrac1/inputshare"))
                 {
-                    Directory.CreateDirectory(GetTempPath() + @"\sbarrac1\inputshare");
+                    Directory.CreateDirectory(GetTempPath() + @"/sbarrac1/inputshare");
                 }
 
-                if(!File.Exists(GetTempPath() + @"\sbarrac1\inputshare\" + fName))
+                if(!File.Exists(GetTempPath() + @"/sbarrac1/inputshare/" + fName))
                 {
-                    File.Create(GetTempPath() + @"\sbarrac1\inputshare\" + fName).Dispose();
+                    File.Create(GetTempPath() + @"/sbarrac1/inputshare/" + fName).Dispose();
                 }
 
-                LogFilePath = GetTempPath() + @"\sbarrac1\inputshare\" + fName;
+                LogFilePath = GetTempPath() + @"/sbarrac1/inputshare/" + fName;
             }catch(Exception ex)
             {
                 Console.WriteLine("ISLogger: Failed to set log file path: " + ex.Message);
