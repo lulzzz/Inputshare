@@ -10,7 +10,6 @@ Note: This project is in very early development, and things could break.
 
 Note 2: There is current no UI for this project, but will be added later in development. 
 
-Note 3: The client is currently a placeholder while the server is being developed. When the server is at a reasonable state, a Windows service version of the client will be created to allow  more functionality (Alt+ctrl+delete, sending inputs to the login screen etc). A standalone client will also be created.
 
 ## Demo ##
 Quick demo:
