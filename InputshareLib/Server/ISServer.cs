@@ -439,15 +439,17 @@ namespace InputshareLib.Server
         private void Socket_RequestedStreamRead(object sender, NetworkSocket.RequestStreamReadArgs args)
         {
             ISServerSocket client = sender as ISServerSocket;
-
+            ISLogger.Write("{0} request stream read", client.ClientName);
             try
             {
-
+                var ddOperation = ddControllerV2.GetOperationFromToken(args.Token);
+                
                 //We need to check if this token is associated with the drag drop operation file token.
                 //If it is, and localhost is not the host of the operation, then we need to request the data from the host
-                if (args.Token == ddControllerV2.CurrentOperation?.RemoteFileAccessToken)
+                if (ddOperation != null)
                 {
-                    if(ddControllerV2.CurrentOperation?.ReceiverClient != client)
+                    ISLogger.Write("Got drag drop operation");
+                    if (ddOperation.ReceiverClient != client)
                     {
                         ISLogger.Write("Client {0} attempted to access dragdrop operation files when they are not the drop target", client.ClientName);
                         client.SendStreamReadErrorResponse(args.NetworkMessageId, "Data has been dropped by another client");
@@ -456,12 +458,15 @@ namespace InputshareLib.Server
 
 
                     //if localhost is not the host of the dragdrop operation, we need to get data from whichever client has the files
-                    if (!ddControllerV2.CurrentOperation.Host.IsLocalhost)
+                    if (!ddOperation.Host.IsLocalhost)
                     {
-                        ReplyWithExternalFileData(client, args.NetworkMessageId , args.Token, args.File, args.ReadLen);
+                        ISLogger.Write("{0} reading from {1}", client.ClientName, ddOperation.Host.ClientName);
+                        ReplyWithExternalFileData(client, ddOperation.Host, args.NetworkMessageId , args.Token, args.File, args.ReadLen);
                         return;
                     }
-                }else if(args.Token == cbController.currentOperation?.HostFileAccessToken)
+                }
+                
+                /*else if(args.Token == cbController.currentOperation?.HostFileAccessToken)
                 {
                     if(cbController.currentOperation?.DataType == ClipboardDataType.File && !cbController.currentOperation.Host.IsLocalhost)
                     {
@@ -469,7 +474,7 @@ namespace InputshareLib.Server
                         ReplyWithExternalFileData(client, args.NetworkMessageId, args.Token, args.File, args.ReadLen);
                         return;
                     }
-                }
+                }*/
 
                 byte[] data = new byte[args.ReadLen];
                 int readLen = fileController.ReadStream(args.Token, args.File, data, 0, args.ReadLen);
@@ -485,11 +490,11 @@ namespace InputshareLib.Server
         }
 
 
-        private async void ReplyWithExternalFileData(ISServerSocket client, Guid networkMessageId, Guid token, Guid fileId, int readLen)
+        private async void ReplyWithExternalFileData(ISServerSocket client, ISServerSocket host, Guid networkMessageId, Guid token, Guid fileId, int readLen)
         {
             try
             {
-                byte[] fileData = await ddControllerV2.CurrentOperation.Host.RequestReadStreamAsync(token, fileId, readLen);
+                byte[] fileData = await host.RequestReadStreamAsync(token, fileId, readLen);
                 client.SendReadRequestResponse(networkMessageId, fileData);
             }catch(Exception ex)
             {
@@ -498,9 +503,17 @@ namespace InputshareLib.Server
             }
         }
 
+        /// <summary>
+        /// Occurs when a client has fully read a file.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private void Socket_RequestedCloseStream(object sender, NetworkSocket.RequestCloseStreamArgs args)
         {
-            fileController.CloseStream(args.Token, args.File);
+            if(!fileController.CloseStream(args.Token, args.File))
+            {
+                ddControllerV2.Client_RequestCloseStream(sender, args);
+            }
         }
 
         private void Socket_RequestedFileToken(object sender, NetworkSocket.FileTokenRequestArgs args)

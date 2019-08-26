@@ -56,7 +56,7 @@ namespace InputshareLib.Clipboard.DataTypes
         public class FileAttributes
         {
             [field: NonSerialized]
-            public delegate Task<byte[]> RequestPartDelegate(Guid token, Guid fileId, int readLen);
+            public delegate Task<byte[]> RequestPartDelegate(Guid token,Guid operationId,  Guid fileId, int readLen);
 
             [field: NonSerialized]
             public event EventHandler ReadComplete;

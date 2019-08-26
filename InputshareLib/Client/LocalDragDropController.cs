@@ -31,6 +31,11 @@ namespace InputshareLib.Client
         internal void Socket_DragDropCancelled(object sender, Guid operationId)
         {
             ddManager.CancelDrop();
+
+            if(operationId == CurrentOperation.OperationId)
+            {
+                fileController.DeleteToken(CurrentOperation.AssociatedAccessToken);
+            }
         }
 
         internal void Socket_CancelAnyDragDrop(object sender, EventArgs _)
@@ -47,10 +52,7 @@ namespace InputshareLib.Client
 
                 ISLogger.Write("Closing dragdrop operation streams...");
                 CurrentOperation.Completed = true;
-                foreach (var token in CurrentOperation.AssociatedAccessTokens)
-                {
-                    fileController.DeleteToken(token);
-                }
+                fileController.DeleteToken(CurrentOperation.AssociatedAccessToken);
                 if (!previousOperations.ContainsKey(CurrentOperation.OperationId))
                     previousOperations.Add(CurrentOperation.OperationId, CurrentOperation);
 
@@ -61,10 +63,7 @@ namespace InputshareLib.Client
                 {
                     ISLogger.Write("Server marked previous dragdrop operation complete... closing streams");
 
-                    foreach (var id in operation.AssociatedAccessTokens)
-                    {
-                        fileController.DeleteToken(id);
-                    }
+                    fileController.DeleteToken(CurrentOperation.AssociatedAccessToken);
 
                     operation.Completed = true;
                 }
@@ -122,9 +121,6 @@ namespace InputshareLib.Client
 
         private async void BeginReceivedOperation(NetworkSocket.DragDropDataReceivedArgs args)
         {
-            if (CurrentOperation != null && !previousOperations.ContainsKey(CurrentOperation.OperationId))
-                previousOperations.Add(CurrentOperation.OperationId, CurrentOperation);
-
             //Check if the received operation has previously been received
             if (CurrentOperation?.OperationId == args.OperationId)
             {
@@ -132,8 +128,12 @@ namespace InputshareLib.Client
                 return;
             }
 
+            if (CurrentOperation != null && !previousOperations.ContainsKey(CurrentOperation.OperationId))
+                previousOperations.Add(CurrentOperation.OperationId, CurrentOperation);
+
+
             ClipboardDataBase cbData = ClipboardDataBase.FromBytes(args.RawData);
-            CurrentOperation = new DragDropOperation(args.OperationId, cbData);
+            
 
             //We need to setup the virtual files if this is a file drop
             if (cbData is ClipboardVirtualFileData cbFiles)
@@ -160,6 +160,7 @@ namespace InputshareLib.Client
                 }
             }
 
+            CurrentOperation = new DragDropOperation(args.OperationId, cbData);
             ddManager.DoDragDrop(cbData);
         }
 
@@ -172,7 +173,7 @@ namespace InputshareLib.Client
             Server.RequestCloseStream(file.RemoteAccessToken, file.FileRequestId);
         }
 
-        private async Task<byte[]> VirtualFile_RequestDataAsync(Guid token, Guid fileId, int readLen)
+        private async Task<byte[]> VirtualFile_RequestDataAsync(Guid token, Guid operationId, Guid fileId, int readLen)
         {
             return await Server.RequestReadStreamAsync(token, fileId, readLen);
         }
@@ -186,7 +187,7 @@ namespace InputshareLib.Client
             }
 
             public bool Completed { get; set; }
-            public List<Guid> AssociatedAccessTokens { get; } = new List<Guid>();
+            public Guid AssociatedAccessToken { get; set; }
             public Guid OperationId { get; }
             public ClipboardDataBase Data { get; }
         }

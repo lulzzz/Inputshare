@@ -24,7 +24,7 @@ namespace InputshareLibWindows.Clipboard
 
         private List<ClipboardVirtualFileData.FileAttributes> operationFiles;
         private MemoryStream fileDescriptorStream;
-        private List<ManagedIStream> streams = new List<ManagedIStream>();
+        private List<ManagedRemoteIStream> streams = new List<ManagedRemoteIStream>();
 
         public InputshareDataObject(ClipboardTextData text)
         {
@@ -45,7 +45,7 @@ namespace InputshareLibWindows.Clipboard
             foreach (var file in files)
             {
                 //ISLogger.Write("Creating remote file stream for " + file.FileName);
-                ManagedIStream str = new ManagedIStream(file);
+                ManagedRemoteIStream str = new ManagedRemoteIStream(file);
                 streams.Add(str);
             }
 
@@ -108,8 +108,7 @@ namespace InputshareLibWindows.Clipboard
                         }
                         catch (Exception ex)
                         {
-
-                            ISLogger.Write("InputshareDataObject: Get FileContents failed: " + ex.Message);
+                            //ISLogger.Write("InputshareDataObject: Get FileContents failed: " + ex.Message);
                             return;
                         }
                     }

@@ -61,6 +61,26 @@ namespace InputshareLib.Server
             BeginOperation(ISServerSocket.Localhost, cbData, Guid.NewGuid());
         }
 
+        public void Client_RequestCloseStream(object sender, NetworkSocket.RequestCloseStreamArgs args)
+        {
+            if(CurrentOperation?.RemoteFileAccessToken == args.Token)
+            {
+                ISLogger.Write("Sent close filestream to " + CurrentOperation.Host.ClientName);
+                CurrentOperation.Host.RequestCloseStream(args.Token, args.File);
+            }
+            else
+            {
+                foreach(var operation in previousOperationIds.Values)
+                {
+                    if(operation.RemoteFileAccessToken == args.Token)
+                    {
+                        operation.Host.RequestCloseStream(args.Token, args.File);
+                        ISLogger.Write("Sent close filestream to " + operation.Host.ClientName);
+                    }
+                }
+            }
+        }
+
         public void Client_DataDropped(object sender, NetworkSocket.DragDropDataReceivedArgs args)
         {
             ISServerSocket client = sender as ISServerSocket;
@@ -237,6 +257,12 @@ namespace InputshareLib.Server
 
             if(operationId == CurrentOperation?.OperationId)
             {
+                if(CurrentOperation.State != DragDropState.Dragging)
+                {
+                    ISLogger.Write("DragDropController: {0} attempted to cancel dragdrop operation when state is {1}", sender.ClientName, CurrentOperation.State);
+                    return;
+                }
+
                 ISLogger.Write("DragDropController: {0} cancelled current operation", sender.ClientName);
                 CurrentOperation.State = DragDropState.Cancelled;
                 //Make sure all clients release any files that are currently being dragged
@@ -255,9 +281,19 @@ namespace InputshareLib.Server
             }
             else if (previousOperationIds.ContainsKey(operationId))
             {
-                ISLogger.Write("DragDropController: {0} cancelled old operation", sender.ClientName);
+              
+
+                
                 if (previousOperationIds.TryGetValue(operationId, out DragDropOperation operation))
                 {
+                    if (operation.State != DragDropState.Dragging)
+                    {
+                        ISLogger.Write("DragDropController: {0} attempted to cancel dragdrop operation when state is {1}", sender.ClientName, operation.State);
+                        return;
+                    }
+
+                    ISLogger.Write("DragDropController: {0} cancelled old operation", sender.ClientName);
+
                     operation.State = DragDropState.Cancelled;
 
                     if (operation.Host.IsLocalhost && operation.DataType == ClipboardDataType.File)
@@ -295,6 +331,7 @@ namespace InputshareLib.Server
             }
             else if (CurrentOperation.OperationId == operationId && CurrentOperation.State != DragDropState.Dragging)
             {
+                //TODO - WindowsDragDropManager reports filedrop success twice
                 ISLogger.Write("DragDropController: {0} attempted to send drop success when specified operationstate is {1}!", sender.ClientName, CurrentOperation.State);
                 return;
             }
@@ -326,6 +363,18 @@ namespace InputshareLib.Server
             CurrentOperation.State = DragDropState.TransferingFiles;
         }
 
+        public DragDropOperation GetOperationFromToken(Guid tokenId)
+        {
+            if (CurrentOperation.RemoteFileAccessToken == tokenId)
+                return CurrentOperation;
+
+            foreach (var op in previousOperationIds)
+                if (op.Value.RemoteFileAccessToken == tokenId)
+                    return op.Value;
+
+            return null;
+        }
+
         /// <summary>
         /// Called when localhost or a client fully completes a dragdrop operation
         /// Complete means that the files have been fully read, while success means they have been dropped.
@@ -339,7 +388,7 @@ namespace InputshareLib.Server
             {
                 ISLogger.Write("Current dragdrop operation marked as complete by " + sender.ClientName);
                 CurrentOperation.State = DragDropState.Complete;
-                CancelAllDragDrops();
+                //CancelAllDragDrops();
 
                 //Let the host know that it can now close all streams and delete access token
                 CurrentOperation.Host.SendDragDropComplete(operationId);
@@ -388,6 +437,8 @@ namespace InputshareLib.Server
             if (oldClient.IsLocalhost && CurrentOperation?.State != DragDropState.Dragging && ddManager.LeftMouseState)
                 ddManager.CheckForDrop();
 
+            ddManager.CancelDrop();
+
             if (CurrentOperation == null)
                 return;
 
@@ -411,8 +462,6 @@ namespace InputshareLib.Server
                     newClient.SendDragDropData(CurrentOperation.OperationData.ToBytes(), CurrentOperation.OperationId);
         }
 
-        bool reportedSuccess = false;
-
         /// <summary>
         /// The virtual file object calls this method when it needs to read the next block of data
         /// </summary>
@@ -420,24 +469,33 @@ namespace InputshareLib.Server
         /// <param name="fileId"></param>
         /// <param name="readLen"></param>
         /// <returns></returns>
-        private async Task<byte[]> File_RequestDataAsync(Guid token, Guid fileId, int readLen)
+        private async Task<byte[]> File_RequestDataAsync(Guid token, Guid operationId, Guid fileId, int readLen)
         {
-            if (!reportedSuccess)
+            DragDropOperation operation;
+
+            if (operationId == CurrentOperation.OperationId)
+                operation = CurrentOperation;
+            else if (previousOperationIds.ContainsKey(operationId))
+                previousOperationIds.TryGetValue(operationId, out operation);
+            else
             {
-                reportedSuccess = true;
-                CurrentOperation.State = DragDropState.TransferingFiles;
+                ISLogger.Write("DragDropController: Operation ID not found");
+                return new byte[0];
             }
 
             try
             {
-                return await CurrentOperation.Host.RequestReadStreamAsync(token, fileId, readLen);
+                return await operation.Host.RequestReadStreamAsync(token, fileId, readLen);
             }
-            catch (Exception ex)
+            catch (NetworkSocket.RequestTimedOutException)
             {
-                ISLogger.Write("DragDropController: " + ex.Message);
+                ISLogger.Write("DragDropController: Failed to read from remote file: Request timed out");
+                return new byte[0];
+            }catch(Exception ex)
+            {
+                ISLogger.Write("DragDropController: Failed to read from remote file: " + ex.Message);
                 return new byte[0];
             }
-            
         }
 
         private async Task<Guid> CreateAccessTokenForOperation(DragDropOperation operation)

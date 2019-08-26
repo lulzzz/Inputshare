@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.ComTypes;
 
 namespace InputshareLibWindows.Clipboard
 {
-    internal class ManagedIStream : IStream
+    internal class ManagedRemoteIStream : IStream
     {
         /// <summary>
         /// The file that is being written to the stream
@@ -22,7 +22,7 @@ namespace InputshareLibWindows.Clipboard
         /// Creates an IStream that uses a network machine as the source of data
         /// </summary>
         /// <param name="file"></param>
-        internal ManagedIStream(ClipboardVirtualFileData.FileAttributes file)
+        internal ManagedRemoteIStream(ClipboardVirtualFileData.FileAttributes file)
         {
             SourceVirtualFile = file;
             SourceVirtualFile.CloseStreamRequested += FileInfo_CloseStreamRequested;
@@ -70,7 +70,7 @@ namespace InputshareLibWindows.Clipboard
                 }
                 
                 //using await will break the dragdrop operation!
-                byte[] data = SourceVirtualFile.ReadDelegate(SourceVirtualFile.RemoteAccessToken, SourceVirtualFile.FileRequestId, bufferSize).Result;
+                byte[] data = SourceVirtualFile.ReadDelegate(SourceVirtualFile.RemoteAccessToken, SourceVirtualFile.FileOperationId, SourceVirtualFile.FileRequestId, bufferSize).Result;
 
                 //check that close has not been called
                 if (closeStream || data.Length == 0)
@@ -86,8 +86,7 @@ namespace InputshareLibWindows.Clipboard
             }
             catch (Exception ex)
             {
-                ISLogger.Write("istream read error " + ex.Message);
-                ISLogger.Write(ex.StackTrace);
+                ISLogger.Write("ManagedRemoteIStream: Failed to read remote file: " + ex.Message);
             }
         }
 

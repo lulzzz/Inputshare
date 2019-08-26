@@ -217,11 +217,11 @@ namespace InputshareLib.Net
         /// <param name="message"></param>
         /// <exception cref="RequestTimedOutException"></exception>
         /// <returns></returns>
-        private Task<NetworkMessage> SendRequestAsync(NetworkMessage message)
+        private async Task<NetworkMessage> SendRequestAsync(NetworkMessage message)
         {
             try
             {
-                return Task.Run(() =>
+                return await Task.Run(() =>
                 {
                     AutoResetEvent evt = new AutoResetEvent(false);
                     NetworkMessage msg;

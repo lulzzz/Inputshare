@@ -248,6 +248,7 @@ namespace InputshareLib.Client
                 operation = currentClipboardOperation;
             else if (args.FileGroupId == ddController.CurrentOperation?.OperationId)
                 operation = new DataOperation(ddController.CurrentOperation.OperationId, ddController.CurrentOperation.Data);
+
             else
             {
                 //todo - return error
@@ -260,7 +261,7 @@ namespace InputshareLib.Client
                 Guid token = CreateTokensForOperation(operation);
 
                 //we need to keep track of which tokens are assoicated with which transfer 
-                ddController.CurrentOperation.AssociatedAccessTokens.Add(token);
+                ddController.CurrentOperation.AssociatedAccessToken = token;
                 ISLogger.Write("added associated access token " + token);
                 socket.SendTokenRequestReponse(args.NetworkMessageId, token);
             }catch(Exception ex)

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Timers;
 
 namespace InputshareLib
 {
@@ -18,8 +20,21 @@ namespace InputshareLib
         /// </summary>
         private class AccessToken
         {
+            public event EventHandler<Guid> TokenClosed;
+
+            private Timer readTimeoutTimer;
+            private Stopwatch timeoutStopwatch;
+
             public AccessToken(Guid tokenId, Guid[] allowedFiles, string[] allowedFileSources)
             {
+                timeoutStopwatch = new Stopwatch();
+                timeoutStopwatch.Start();
+
+                readTimeoutTimer = new Timer(2000);
+                readTimeoutTimer.Elapsed += ReadTimeoutTimer_Elapsed;
+                readTimeoutTimer.AutoReset = true;
+                readTimeoutTimer.Start();
+
                 TokenId = tokenId;
                 AllowedFiles = allowedFiles;
 
@@ -29,17 +44,33 @@ namespace InputshareLib
                 }
             }
 
+            private void ReadTimeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
+            {
+                //If this token has not been access in the past 10 seconds, close all streams.
+                if(timeoutStopwatch.ElapsedMilliseconds > 10000)
+                {
+                    CloseAllStreams();
+
+                }
+            }
+
             public void CloseAllStreams()
             {
                 foreach(var stream in openFileStreams)
                 {
                     stream.Value.Dispose();
                 }
+
+                openFileStreams.Clear();
+                readTimeoutTimer.Dispose();
+                timeoutStopwatch.Stop();
+                TokenClosed?.Invoke(this, TokenId);
             }
 
             public void CloseStream(Guid file)
             {
-                if(openFileStreams.TryGetValue(file, out FileStream stream))
+                timeoutStopwatch.Restart();
+                if (openFileStreams.TryGetValue(file, out FileStream stream))
                 {
                     stream.Close();
                 }
@@ -47,7 +78,8 @@ namespace InputshareLib
 
             public int ReadFile(Guid file, byte[] buffer, int offset, int readLen)
             {
-                if(openFileStreams.TryGetValue(file, out FileStream stream))
+                timeoutStopwatch.Restart();
+                if (openFileStreams.TryGetValue(file, out FileStream stream))
                 {
                     return stream.Read(buffer, offset, readLen);
                 }
@@ -69,6 +101,7 @@ namespace InputshareLib
 
             public long SeekFile(Guid file, SeekOrigin origin, long offset)
             {
+                timeoutStopwatch.Restart();
                 if (openFileStreams.TryGetValue(file, out FileStream stream))
                 {
                     return stream.Seek(offset, origin);
@@ -110,9 +143,16 @@ namespace InputshareLib
         {
             Guid accessId = Guid.NewGuid();
             AccessToken token = new AccessToken(accessId, info.FileIds, info.FileSources);
+            token.TokenClosed += Token_TokenClosed;
             currentAccessTokens.Add(accessId, token);
-            ISLogger.Write("Created group token {0} for {1} files", accessId, info.FileIds.Length);
+            ISLogger.Write("FileAccessController: Created group token {0} for {1} files", accessId, info.FileIds.Length);
             return accessId;
+        }
+
+        private void Token_TokenClosed(object sender, Guid e)
+        {
+            ISLogger.Write("FileAccessController: Token {0} closed", e);
+            currentAccessTokens.Remove(e);
         }
 
         public int ReadStream(Guid token, Guid file, byte[] buffer, int offset, int readLen)
@@ -146,12 +186,15 @@ namespace InputshareLib
             return currentAccessTokens.ContainsKey(token);
         }
 
-        public void CloseStream(Guid token, Guid file)
+        public bool CloseStream(Guid token, Guid file)
         {
             if(currentAccessTokens.TryGetValue(token, out AccessToken access))
             {
                 access.CloseStream(file);
+                return true;
             }
+
+            return false;
         }
 
         public void DeleteToken(Guid token)

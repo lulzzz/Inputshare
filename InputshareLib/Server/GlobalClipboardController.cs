@@ -87,7 +87,7 @@ namespace InputshareLib.Server
             ISLogger.Write("Debug: Clipboard: {0} read complete", file.FileName);
         }
 
-        private async Task<byte[]> File_RequestDataAsync(Guid token, Guid fileId, int readLen)
+        private async Task<byte[]> File_RequestDataAsync(Guid token, Guid operationId, Guid fileId, int readLen)
         {
             return await currentOperation.Host.RequestReadStreamAsync(token, fileId, readLen);
         }
