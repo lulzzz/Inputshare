@@ -60,4 +60,3 @@ The current assigned hotkeys can be viewed via the list command.
 ## Current issues ##
 * Copy/pasting files does not work yet.
 * Memory issues when dealing with copy/pasting images
-* Dragging images does not work, instead text is dragged.
