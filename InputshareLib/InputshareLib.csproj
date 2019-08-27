@@ -3,9 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <PublishTrimmed>true</PublishTrimmed>
-    <PublishReadyToRun>true</PublishReadyToRun>
     <RootNamespace>InputshareLib</RootNamespace>
+    <SignAssembly>false</SignAssembly>
+    <Version>1.0.1</Version>
+    <Authors>Sam Barraclough</Authors>
+    <Product>Inputshare</Product>
+    <PackageProjectUrl>https://github.com/sbarrac1/Inputshare</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/sbarrac1/Inputshare</RepositoryUrl>
+    <Company>Sbarrac1</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">

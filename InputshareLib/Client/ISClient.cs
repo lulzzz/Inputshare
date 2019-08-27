@@ -248,12 +248,13 @@ namespace InputshareLib.Client
             {
                 operation = currentClipboardOperation;
 
+                /*
                 if(operation.Data.DataType == ClipboardDataType.File)
                 {
                     ISLogger.Write("Responding to token request: Copy/Pasting files not yet implemented");
                     socket.SendFileErrorResponse(args.NetworkMessageId, "Copy/Pasting files not yet implemented");
                     return;
-                }
+                }*/
             }
                 
             else if (args.FileGroupId == ddController.CurrentOperation?.OperationId)

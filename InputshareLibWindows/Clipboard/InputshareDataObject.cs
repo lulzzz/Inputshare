@@ -27,6 +27,7 @@ namespace InputshareLibWindows.Clipboard
         private MemoryStream fileDescriptorStream;
         private List<ManagedRemoteIStream> streams = new List<ManagedRemoteIStream>();
 
+
         public InputshareDataObject(ClipboardTextData text)
         {
             objectType = ClipboardDataType.Text;
@@ -52,16 +53,21 @@ namespace InputshareLibWindows.Clipboard
 
             operationFiles = files;
 
-            
+            byte[] a = BitConverter.GetBytes((int)DragDropEffects.Copy);
+
+            IntPtr p = Marshal.AllocHGlobal(a.Length);
+            Marshal.Copy(a, 0, p, a.Length);
 
             SetData(NativeMethods.CFSTR_FILEDESCRIPTORW, null);
             SetData(NativeMethods.CFSTR_FILECONTENTS, null);
             SetData(NativeMethods.CFSTR_PERFORMEDDROPEFFECT, null);
+            SetData(NativeMethods.CFSTR_PREFERREDDROPEFFECT, IntPtr.Zero);
             SetData("InputshareFileData", "Inputshare object");
         }
 
         public override object GetData(string format, bool autoConvert)
         {
+            ISLogger.Write("Requesting format " + format);
             
             //Don't tell the shell that we have file contents if we only have text or an image
             if(objectType == ClipboardDataType.File)
@@ -74,8 +80,18 @@ namespace InputshareLibWindows.Clipboard
                 {
                     base.SetData(NativeMethods.CFSTR_FILECONTENTS, GetFileContents(m_lindex));
                 }
+                else if (String.Compare(format, NativeMethods.CFSTR_PERFORMEDDROPEFFECT, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    base.SetData(NativeMethods.CFSTR_PREFERREDDROPEFFECT, DragDropEffects.All);
+                }
+
             }
             return base.GetData(format, autoConvert);
+        }
+
+        void System.Runtime.InteropServices.ComTypes.IDataObject.SetData(ref FORMATETC format, ref STGMEDIUM medium, bool release)
+        {
+
         }
 
         [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
@@ -95,7 +111,6 @@ namespace InputshareLibWindows.Clipboard
                         if (objectType != ClipboardDataType.File)
                             return;
                             
-
                         try
                         {
                             //DropSuccess?.Invoke(this, null);
@@ -120,6 +135,7 @@ namespace InputshareLibWindows.Clipboard
                         }
                         try
                         {
+
                             ((System.Runtime.InteropServices.ComTypes.IDataObject)this).GetDataHere(ref formatetc, ref medium);
                             return;
                         }

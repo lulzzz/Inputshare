@@ -550,16 +550,20 @@ namespace InputshareLib.Server
                 if(cbOperation == null)
                 {
                     ISLogger.Write("Server: Denied {0} request to access files that are not part of an operation", client.ClientName);
+                    client.SendFileErrorResponse(args.NetworkMessageId, "Operation not found");
                     return;
                 }
 
-                client.SendFileErrorResponse(args.NetworkMessageId, "Copy/Pasting files not yet implemented");
-
-                /*
-
                 Guid token = await cbController.GenerateAccessToken(cbOperation.OperationId);
+
+                if(token == Guid.Empty)
+                {
+                    client.SendFileErrorResponse(args.NetworkMessageId, "Failed to generate token");
+                    return;
+                }
+
                 client.SendTokenRequestReponse(args.NetworkMessageId, token);
-                ISLogger.Write("Sent clipboard operation access token to {0}", client.ClientName);*/
+                ISLogger.Write("Sent clipboard operation access token to {0}", client.ClientName);
             }
         }
 

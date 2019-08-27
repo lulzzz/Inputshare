@@ -45,8 +45,7 @@ namespace InputshareLib.Server
 
             if (data.DataType == ClipboardDataType.File)
             {
-                ISLogger.Write("Clipboard file copy/paste not yet implemented!");
-                //SetClipboardFiles((data as ClipboardVirtualFileData), host, operationId);
+                SetClipboardFiles((data as ClipboardVirtualFileData), host, operationId);
             }
             else
             {
@@ -65,10 +64,12 @@ namespace InputshareLib.Server
                 //TODO - We can't use the same access token for clipboard operations, as more than one client can
                 //be reading from the stream at the same time which will cause corruption. 
                 //We need to create a new access token for each client that pastes the files to create multiple stream instances
+
+
             }
             else
             {
-                //Assign virtual file events, so if localhosts pastes the files then read data from the host.
+                //Assign virtual file events, so if localhosts pastes the files then the shell can read data from the host.
                 foreach (var file in cbFiles.AllFiles)
                 {
                     file.ReadComplete += File_ReadComplete;
@@ -116,7 +117,6 @@ namespace InputshareLib.Server
                     ISLogger.Write("GlobalClipboardController: Failed to get access token for operation: " + ex.Message);
                     return Guid.Empty;
                 }
-                
             }
 
             op.HostFileAccessTokens.Add(id);

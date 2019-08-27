@@ -5,8 +5,13 @@
     <UseWindowsForms>True</UseWindowsForms>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <PublishTrimmed>true</PublishTrimmed>
-    <PublishReadyToRun>true</PublishReadyToRun>
+
+    <Version>1.0.1</Version>
+    <Company>Sbarrac1</Company>
+    <Product>Inputshare</Product>
+    <PackageProjectUrl>https://github.com/sbarrac1/Inputshare</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/sbarrac1/Inputshare</RepositoryUrl>
+    <Authors>Sam Barraclough</Authors>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
