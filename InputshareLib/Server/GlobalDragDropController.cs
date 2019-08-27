@@ -38,7 +38,6 @@ namespace InputshareLib.Server
 
         private void DdManager_DragDropSuccess(object sender, Guid operationId)
         {
-            //TODO - should this just be current operation ID?
             OnDropSuccess(ISServerSocket.Localhost, operationId);
         }
 
@@ -61,7 +60,6 @@ namespace InputshareLib.Server
         {
             if (CurrentOperation?.RemoteFileAccessToken == args.Token)
             {
-                ISLogger.Write("DragDropController: Sent close filestream to " + CurrentOperation.Host.ClientName);
                 CurrentOperation.Host.RequestCloseStream(args.Token, args.File);
             }
             else
@@ -71,7 +69,6 @@ namespace InputshareLib.Server
                     if (operation.RemoteFileAccessToken == args.Token)
                     {
                         operation.Host.RequestCloseStream(args.Token, args.File);
-                        ISLogger.Write("SDragDropController: ent close filestream to " + operation.Host.ClientName);
                     }
                 }
             }
@@ -115,6 +112,8 @@ namespace InputshareLib.Server
                 return;
             }
 
+            ISLogger.Write("New DragDrop operation. Type {0}, Host {1}, ID {2}", cbData.DataType, sender.ClientName, operationId);
+
             if (cbData.DataType == ClipboardDataType.File)
             {
 
@@ -124,7 +123,7 @@ namespace InputshareLib.Server
             }
             else
             {
-                BeginTextOrImageOperation(cbData);
+                BeginTextOrImageOperation(cbData, operationId);
                 OnOperationChanged();
             }
         }
@@ -205,7 +204,7 @@ namespace InputshareLib.Server
             }
         }
 
-        private void BeginTextOrImageOperation(ClipboardDataBase cbData)
+        private void BeginTextOrImageOperation( ClipboardDataBase cbData, Guid operationId)
         {
             //If the previous dragdrop operation is still transfering files, store it so that the files can keep being transfered
             if (CurrentOperation != null && CurrentOperation.State == DragDropState.TransferingFiles)
@@ -214,11 +213,11 @@ namespace InputshareLib.Server
 
             //Create a new operation with the text/image data, we don't care about the ID or host
             //as text and image data is not streamed the same way as file data. Text/Image data are sent as a single block
-            CurrentOperation = new DragDropOperation(cbData, null, Guid.NewGuid());
+            CurrentOperation = new DragDropOperation(cbData, null, operationId);
 
             if (currentInputClient.IsLocalhost)
             {
-                ddManager.DoDragDrop(cbData, Guid.Empty);
+                ddManager.DoDragDrop(cbData, operationId);
             }
             else
             {
@@ -237,12 +236,16 @@ namespace InputshareLib.Server
                 return;
             }
 
+
             DragDropOperation operation;
 
             if (operationId == CurrentOperation?.OperationId)
                 operation = CurrentOperation;
             else if (!previousOperationIds.TryGetValue(operationId, out operation))
+            {
+                ISLogger.Write("DragDropController: Error cancelling operation: operation not found");
                 return;
+            }
 
             if (operation.State != DragDropState.Dragging)
             {
@@ -250,13 +253,19 @@ namespace InputshareLib.Server
                 return;
             }
 
-            ISLogger.Write("DragDropController: {0} cancelled current operation", sender.ClientName);
+            ISLogger.Write("DragDropController: {0} cancelled current operation {1}", sender.ClientName, operation.OperationId);
             operation.State = DragDropState.Cancelled;
 
-            if (operation.Host != null && operation.Host.IsLocalhost)
-                fileController.DeleteToken(operation.RemoteFileAccessToken);
-            else if (operation.Host != null && !operation.Host.IsLocalhost)
-                CurrentOperation.Host.SendDragDropComplete(operationId);
+            if(operation.DataType == ClipboardDataType.File)
+            {
+                if (operation.Host != null && operation.Host.IsLocalhost)
+                    fileController.DeleteToken(operation.RemoteFileAccessToken);
+                else if (operation.Host != null && !operation.Host.IsLocalhost)
+                    CurrentOperation.Host.SendDragDropComplete(operationId);
+            }
+
+            CancelAllDragDrops();
+          
             OnOperationChanged();
         }
 
@@ -272,7 +281,7 @@ namespace InputshareLib.Server
             //If the specified operation is the current operation, mark it as success only if it is in the dragging state
             if (CurrentOperation?.OperationId == operationId && CurrentOperation?.State == DragDropState.Dragging)
             {
-                ISLogger.Write("DragDropController: {0} marked current dragdrop operation success...", sender.ClientName);
+                ISLogger.Write("DragDropController: {0} marked current dragdrop operation success... {1}", sender.ClientName, CurrentOperation.OperationId);
                 CurrentOperation.State = DragDropState.TransferingFiles;
                 CurrentOperation.ReceiverClient = sender;
                 OnOperationChanged();
@@ -291,7 +300,7 @@ namespace InputshareLib.Server
                 {
                     if (operation.State == DragDropState.Dragging)
                     {
-                        ISLogger.Write("DragDropController: {0} marked previous dragdrop operation success", sender.ClientName);
+                        ISLogger.Write("DragDropController: {0} marked previous dragdrop operation success {1}", sender.ClientName, operation.OperationId);
                         operation.State = DragDropState.TransferingFiles;
                         operation.ReceiverClient = sender;
                         OnOperationChanged();
@@ -331,7 +340,7 @@ namespace InputshareLib.Server
         {
             if (CurrentOperation.OperationId == operationId)
             {
-                ISLogger.Write("DragDropController: Current dragdrop operation marked as complete by " + sender.ClientName);
+                ISLogger.Write("DragDropController: Current dragdrop operation marked as complete by " + sender.ClientName + " " + operationId);
 
                 if (CurrentOperation?.State == DragDropState.Cancelled)
                     return;
@@ -353,7 +362,7 @@ namespace InputshareLib.Server
                         return;
 
                     oldOperation.State = DragDropState.Complete;
-                    ISLogger.Write("DragDropController: " + sender.ClientName + " marked old dragdrop operation as complete");
+                    ISLogger.Write("DragDropController: " + sender.ClientName + " marked old dragdrop operation as complete " +  operationId);
 
                     //Let the host know that it can now close all streams and delete access token
                     //or delete the access tokens if localhost is the host
