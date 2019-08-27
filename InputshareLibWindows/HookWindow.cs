@@ -193,7 +193,6 @@ namespace InputshareLibWindows
             try
             {
                 var obj = System.Windows.Forms.Clipboard.GetDataObject();
-
                 if(obj == null)
                 {
                     ISLogger.Write("Failed to read clipboard data.");

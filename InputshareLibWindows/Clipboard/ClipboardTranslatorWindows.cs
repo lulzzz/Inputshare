@@ -29,7 +29,6 @@ namespace InputshareLibWindows.Clipboard
             if (data is ClipboardVirtualFileData fd)
             {
                 List<FileAttributes> files = fd.AllFiles;
-                ISLogger.Write("Setting file dataobject");
                 InputshareDataObject o = new InputshareDataObject(files);
                 return o;
             }
@@ -68,20 +67,13 @@ namespace InputshareLibWindows.Clipboard
             try
             {
                 System.Windows.Forms.DataObject obj = data as System.Windows.Forms.DataObject;
-
                 if (data.GetDataPresent(DataFormats.Bitmap, true))
                 {
                     using (Image i = obj.GetImage())
                     {
                         using (MemoryStream ms = new MemoryStream())
                         {
-                            ImageCodecInfo inf = GetEncoder(ImageFormat.Bmp);
-                            Encoder e = Encoder.Quality;
-                            EncoderParameters ps = new EncoderParameters(1);
-                            ps.Param[0] = new EncoderParameter(e, 75L);
-
-                            i.Save(ms, inf, ps);
-
+                            i.Save(ms, ImageFormat.Jpeg);
                             return new ClipboardImageData(ms.ToArray(), true);
                         }
                     }
@@ -92,7 +84,6 @@ namespace InputshareLibWindows.Clipboard
                 }
                 else if (data.GetDataPresent(DataFormats.FileDrop))
                 {
-                    ISLogger.Write("Reading file drop...");
                     ClipboardVirtualFileData fd = ReadFileDrop(data);
                     return fd;
                 }
@@ -131,7 +122,6 @@ namespace InputshareLibWindows.Clipboard
 
             return null;
         }
-
         private static ClipboardVirtualFileData ReadFileDrop(System.Windows.Forms.IDataObject data)
         {
             string[] files = (string[])data.GetData(DataFormats.FileDrop);
@@ -174,7 +164,6 @@ namespace InputshareLibWindows.Clipboard
 
             return new ClipboardVirtualFileData(root);
         }
-
         private static DirectoryAttributes AddDirectoriesRecursive(DirectoryAttributes folder, string current, ref int fCount)
         {
             //current = Path.Combine(current, folder.RelativePath);

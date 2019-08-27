@@ -2,6 +2,7 @@
 using InputshareLib.Clipboard.DataTypes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -51,6 +52,8 @@ namespace InputshareLibWindows.Clipboard
 
             operationFiles = files;
 
+            
+
             SetData(NativeMethods.CFSTR_FILEDESCRIPTORW, null);
             SetData(NativeMethods.CFSTR_FILECONTENTS, null);
             SetData(NativeMethods.CFSTR_PERFORMEDDROPEFFECT, null);
@@ -59,6 +62,7 @@ namespace InputshareLibWindows.Clipboard
 
         public override object GetData(string format, bool autoConvert)
         {
+            
             //Don't tell the shell that we have file contents if we only have text or an image
             if(objectType == ClipboardDataType.File)
             {
@@ -70,11 +74,6 @@ namespace InputshareLibWindows.Clipboard
                 {
                     base.SetData(NativeMethods.CFSTR_FILECONTENTS, GetFileContents(m_lindex));
                 }
-            }
-            
-            else if (String.Compare(format, NativeMethods.CFSTR_PERFORMEDDROPEFFECT, StringComparison.OrdinalIgnoreCase) == 0)
-            {
-                base.SetData(NativeMethods.CFSTR_PREFERREDDROPEFFECT, DragDropEffects.All);
             }
             return base.GetData(format, autoConvert);
         }
@@ -88,7 +87,6 @@ namespace InputshareLibWindows.Clipboard
                 
                 if (formatetc.cfFormat == (Int16)DataFormats.GetFormat(NativeMethods.CFSTR_FILECONTENTS).Id)
                     m_lindex = formatetc.lindex;
-
                
                 if (GetTymedUseable(formatetc.tymed))
                 {
@@ -96,7 +94,7 @@ namespace InputshareLibWindows.Clipboard
                     {
                         if (objectType != ClipboardDataType.File)
                             return;
-
+                            
 
                         try
                         {
@@ -171,14 +169,13 @@ namespace InputshareLibWindows.Clipboard
                 foreach (var si in files)
                 {
                     string n = si.RelativePath;
+
+                    //If the file is in the root folder of the operation, the relative path will not be set!
                     if (string.IsNullOrEmpty(si.RelativePath))
                     {
-                        ISLogger.Write("File {0} has invalid relative path!", si.FileName);
                         n = si.FileName;
                     }
 
-                    
-                    
                     FileDescriptor.cFileName = n;
                     Int64 FileWriteTimeUtc = si.LastChangeTime.ToFileTimeUtc();
                     FileDescriptor.ftLastWriteTime.dwHighDateTime = (Int32)(FileWriteTimeUtc >> 32);
@@ -213,21 +210,19 @@ namespace InputshareLibWindows.Clipboard
             return streams[FileNumber];
         }
 
-        private bool usingAsync = true;
         private bool inOperation = false;
         private bool completeSent = false;
-        void IAsyncOperation.SetAsyncMode(int fDoOpAsync)
+        public void SetAsyncMode(int fDoOpAsync)
         {
-            ISLogger.Write("Debug: Set async mode");
-            usingAsync = !(NativeMethods.VARIANT_FALSE == fDoOpAsync);
+
         }
 
-        void IAsyncOperation.GetAsyncMode(out int pfIsOpAsync)
+        public void GetAsyncMode(out int pfIsOpAsync)
         {
-            pfIsOpAsync = usingAsync ? NativeMethods.VARIANT_TRUE : NativeMethods.VARIANT_FALSE;
+            pfIsOpAsync = NativeMethods.VARIANT_TRUE;
         }
 
-        void IAsyncOperation.StartOperation(IBindCtx pbcReserved)
+        public void StartOperation(IBindCtx pbcReserved)
         {
             inOperation = true;
 
@@ -239,15 +234,14 @@ namespace InputshareLibWindows.Clipboard
 
         }
 
-        void IAsyncOperation.InOperation(out int pfInAsyncOp)
+        public void InOperation(out int pfInAsyncOp)
         {
             pfInAsyncOp = inOperation ? NativeMethods.VARIANT_TRUE : NativeMethods.VARIANT_FALSE;
         }
 
-        void IAsyncOperation.EndOperation(int hResult, IBindCtx pbcReserved, uint dwEffects)
+        public void EndOperation(int hResult, IBindCtx pbcReserved, uint dwEffects)
         {
             inOperation = false;
-
             if (!completeSent)
             {
                 completeSent = true;

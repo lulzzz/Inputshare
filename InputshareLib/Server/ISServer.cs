@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using static InputshareLib.Displays.DisplayManagerBase;
 namespace InputshareLib.Server
 {
@@ -52,7 +53,7 @@ namespace InputshareLib.Server
 
         private GlobalClipboardController cbController;
         private FileAccessController fileController;
-        private GlobalDragDropControllerV2 ddControllerV2;
+        private GlobalDragDropController ddController;
 
 
 
@@ -76,9 +77,9 @@ namespace InputshareLib.Server
             clientSwitchTimer.Restart();
             fileController = new FileAccessController();
             clientMan = new ClientManager(12);
-            ISLogger.Write("Starting server...");
+            ISLogger.Write("Server: Starting server...");
 
-            ddControllerV2 = new GlobalDragDropControllerV2(clientMan, dragDropMan, fileController);
+            ddController = new GlobalDragDropController(clientMan, dragDropMan, fileController);
             cbController = new GlobalClipboardController(clientMan, fileController, SetClipboardData);
 
             StartClientListener(new IPEndPoint(IPAddress.Any, port));
@@ -90,7 +91,7 @@ namespace InputshareLib.Server
             Running = true;
             clientMan.AddClient(ISServerSocket.Localhost);
             firstRun = false;
-            ISLogger.Write("Inputshare server started");
+            ISLogger.Write("Server: Inputshare server started");
             Started?.Invoke(this, null);
         }
 
@@ -161,7 +162,7 @@ namespace InputshareLib.Server
           if (!Running)
                throw new InvalidOperationException("Server not running");
 
-            ISLogger.Write("Stopping server...");
+            ISLogger.Write("Server: Stopping server...");
 
 
             try
@@ -186,7 +187,7 @@ namespace InputshareLib.Server
                 if (dragDropMan.Running)
                     dragDropMan.Stop();
 
-                ISLogger.Write("server stopped.");
+                ISLogger.Write("Server: server stopped.");
                 
             }catch(Exception ex)
             {
@@ -216,7 +217,7 @@ namespace InputshareLib.Server
 
             if(client == null)
             {
-                ISLogger.Write("Failed to switch to client: client not found");
+                ISLogger.Write("Server: Failed to switch to client: client not found");
                 return;
             }
 
@@ -238,7 +239,7 @@ namespace InputshareLib.Server
             clientSwitchTimer.Restart();
 
             //let the dragdrop controller determine if anything needs to be done or sent to the client
-            ddControllerV2.HandleClientSwitch(inputClient, oldClient);
+            ddController.HandleClientSwitch(inputClient, oldClient);
             InputClientSwitched?.Invoke(this, GenerateClientInfo(client));
 
         }
@@ -267,7 +268,7 @@ namespace InputshareLib.Server
 
 
             clientSwitchTimer.Restart();
-            ddControllerV2.HandleClientSwitch(inputClient, oldClient);
+            ddController.HandleClientSwitch(inputClient, oldClient);
             outMan.ResetKeyStates();
             InputClientSwitched?.Invoke(this, GenerateLocalhostInfo());
         }
@@ -290,7 +291,7 @@ namespace InputshareLib.Server
 
             clientB.SetClientAtEdge(sideof, clientA);
             clientA.SetClientAtEdge(sideof.Opposite(), clientB);
-            ISLogger.Write("Set {0} {1}of {2}", clientA.ClientName, sideof, clientB.ClientName);
+            ISLogger.Write("Server: Set {0} {1}of {2}", clientA.ClientName, sideof, clientB.ClientName);
             clientA.SendClientEdgesUpdate();
             clientB.SendClientEdgesUpdate();
         }
@@ -410,7 +411,7 @@ namespace InputshareLib.Server
                 return;
             }
 
-            ISLogger.Write("{1} connected as {0}", e.ClientName, client.ClientEndpoint);
+            ISLogger.Write("Server: {1} connected as {0}", e.ClientName, client.ClientEndpoint);
             CreateClientEventHandlers(client);
             client.DisplayConfiguration = new DisplayConfig(e.DisplayConfig);
             client.AcceptClient();
@@ -430,29 +431,27 @@ namespace InputshareLib.Server
             socket.RequestedStreamRead += Socket_RequestedStreamRead;
             socket.RequestedCloseStream += Socket_RequestedCloseStream;
             socket.RequestedFileToken += Socket_RequestedFileToken;
-            socket.DragDropDataReceived += ddControllerV2.Client_DataDropped;
-            socket.DragDropCancelled += ddControllerV2.Client_DragDropCancelled;
-            socket.DragDropSuccess += ddControllerV2.Client_DragDropSuccess;
-            socket.DragDropOperationComplete += ddControllerV2.Client_DragDropComplete;
+            socket.DragDropDataReceived += ddController.Client_DataDropped;
+            socket.DragDropCancelled += ddController.Client_DragDropCancelled;
+            socket.DragDropSuccess += ddController.Client_DragDropSuccess;
+            socket.DragDropOperationComplete += ddController.Client_DragDropComplete;
         }
 
-        private void Socket_RequestedStreamRead(object sender, NetworkSocket.RequestStreamReadArgs args)
+        private async void Socket_RequestedStreamRead(object sender, NetworkSocket.RequestStreamReadArgs args)
         {
             ISServerSocket client = sender as ISServerSocket;
-            ISLogger.Write("{0} request stream read", client.ClientName);
             try
             {
-                var ddOperation = ddControllerV2.GetOperationFromToken(args.Token);
+                var ddOperation = ddController.GetOperationFromToken(args.Token);
                 
                 //We need to check if this token is associated with the drag drop operation file token.
                 //If it is, and localhost is not the host of the operation, then we need to request the data from the host
                 if (ddOperation != null)
                 {
-                    ISLogger.Write("Got drag drop operation");
                     if (ddOperation.ReceiverClient != client)
                     {
-                        ISLogger.Write("Client {0} attempted to access dragdrop operation files when they are not the drop target", client.ClientName);
-                        client.SendStreamReadErrorResponse(args.NetworkMessageId, "Data has been dropped by another client");
+                        ISLogger.Write("Server: Client {0} attempted to access dragdrop operation files when they are not the drop target", client.ClientName);
+                        client.SendFileErrorResponse(args.NetworkMessageId, "Data has been dropped by another client");
                         return;
                     }
 
@@ -460,21 +459,10 @@ namespace InputshareLib.Server
                     //if localhost is not the host of the dragdrop operation, we need to get data from whichever client has the files
                     if (!ddOperation.Host.IsLocalhost)
                     {
-                        ISLogger.Write("{0} reading from {1}", client.ClientName, ddOperation.Host.ClientName);
-                        ReplyWithExternalFileData(client, ddOperation.Host, args.NetworkMessageId , args.Token, args.File, args.ReadLen);
+                        await ReplyWithExternalFileDataAsync(client, ddOperation.Host, args.NetworkMessageId , args.Token, args.File, args.ReadLen);
                         return;
                     }
                 }
-                
-                /*else if(args.Token == cbController.currentOperation?.HostFileAccessToken)
-                {
-                    if(cbController.currentOperation?.DataType == ClipboardDataType.File && !cbController.currentOperation.Host.IsLocalhost)
-                    {
-                        ISLogger.Write("{0} request clipboard file data", client.ClientName);
-                        ReplyWithExternalFileData(client, args.NetworkMessageId, args.Token, args.File, args.ReadLen);
-                        return;
-                    }
-                }*/
 
                 byte[] data = new byte[args.ReadLen];
                 int readLen = fileController.ReadStream(args.Token, args.File, data, 0, args.ReadLen);
@@ -485,12 +473,21 @@ namespace InputshareLib.Server
             }
             catch(Exception ex)
             {
-                client.SendStreamReadErrorResponse(args.NetworkMessageId, ex.Message);
+                client.SendFileErrorResponse(args.NetworkMessageId, ex.Message);
             }
         }
 
 
-        private async void ReplyWithExternalFileData(ISServerSocket client, ISServerSocket host, Guid networkMessageId, Guid token, Guid fileId, int readLen)
+        /// <summary>
+        /// Requests data from the specified host client and forwards it to the specified reciever client
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="host"></param>
+        /// <param name="networkMessageId"></param>
+        /// <param name="token"></param>
+        /// <param name="fileId"></param>
+        /// <param name="readLen"></param>
+        private async Task ReplyWithExternalFileDataAsync(ISServerSocket client, ISServerSocket host, Guid networkMessageId, Guid token, Guid fileId, int readLen)
         {
             try
             {
@@ -499,7 +496,7 @@ namespace InputshareLib.Server
             }catch(Exception ex)
             {
                 //let the client know that the read failed
-                client.SendStreamReadErrorResponse(networkMessageId, ex.Message);
+                client.SendFileErrorResponse(networkMessageId, ex.Message);
             }
         }
 
@@ -512,32 +509,57 @@ namespace InputshareLib.Server
         {
             if(!fileController.CloseStream(args.Token, args.File))
             {
-                ddControllerV2.Client_RequestCloseStream(sender, args);
+                //If the filecontroller can't find the file ID, dragdropcontroller needs to check 
+                //if an external client owns the access token
+                ddController.Client_RequestCloseStream(sender, args);
             }
         }
 
-        private void Socket_RequestedFileToken(object sender, NetworkSocket.FileTokenRequestArgs args)
+        /// <summary>
+        /// Called when a client requests an access token to access a clipboard or dragdrop operation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private async void Socket_RequestedFileToken(object sender, NetworkSocket.FileTokenRequestArgs args)
         {
             ISServerSocket client = sender as ISServerSocket;
 
-            if(args.FileGroupId == ddControllerV2.CurrentOperation.OperationId)
+            //If the specified operation is the current dragdrop operation
+            if(args.FileGroupId == ddController.CurrentOperation?.OperationId)
             {
-                if(ddControllerV2.CurrentOperation != null && ddControllerV2.CurrentOperation.Host != null && ddControllerV2.CurrentOperation.Host.IsLocalhost)
+                //If operation host is localhost
+                if(ddController.CurrentOperation != null && ddController.CurrentOperation.Host != null && ddController.CurrentOperation.Host.IsLocalhost)
                 {
-                    ISLogger.Write("{0} requested access to local stored dragdrop files", client.ClientName);
-                    client.SendTokenRequestReponse(args.NetworkMessageId, ddControllerV2.CurrentOperation.RemoteFileAccessToken);
-                    ISLogger.Write("Sent {0} access token {1}", client.ClientName, ddControllerV2.CurrentOperation.RemoteFileAccessToken);
+                    client.SendTokenRequestReponse(args.NetworkMessageId, ddController.CurrentOperation.RemoteFileAccessToken);
+                    ISLogger.Write("Server: Sent {0} access token {1}", client.ClientName, ddController.CurrentOperation.RemoteFileAccessToken);
                     return;
-                }else if(ddControllerV2.CurrentOperation != null && ddControllerV2.CurrentOperation.Host != null && !ddControllerV2.CurrentOperation.Host.IsLocalhost)
+                }
+                //If the operation host is another client
+                else if(ddController.CurrentOperation != null && ddController.CurrentOperation.Host != null && !ddController.CurrentOperation.Host.IsLocalhost)
                 {
-                    ISLogger.Write("{0} requested access to external stored dragdrop files", client.ClientName);
-                    client.SendTokenRequestReponse(args.NetworkMessageId, ddControllerV2.CurrentOperation.RemoteFileAccessToken);
-                    ISLogger.Write("Sent {0} access token {1}", client.ClientName, ddControllerV2.CurrentOperation.RemoteFileAccessToken);
-                } 
+                    client.SendTokenRequestReponse(args.NetworkMessageId, ddController.CurrentOperation.RemoteFileAccessToken);
+                    ISLogger.Write("Server: Sent {0} access token {1}", client.ClientName, ddController.CurrentOperation.RemoteFileAccessToken);
+                }
             }
+            //If the operation is not current the dragdrop operatiomn
             else
             {
-                ISLogger.Write("Denied {0} request to access files that are not part of an operation");
+                //check if the operation a clipboard file operation
+                var cbOperation = cbController.GetOperationFromId(args.FileGroupId);
+
+                if(cbOperation == null)
+                {
+                    ISLogger.Write("Server: Denied {0} request to access files that are not part of an operation", client.ClientName);
+                    return;
+                }
+
+                client.SendFileErrorResponse(args.NetworkMessageId, "Copy/Pasting files not yet implemented");
+
+                /*
+
+                Guid token = await cbController.GenerateAccessToken(cbOperation.OperationId);
+                client.SendTokenRequestReponse(args.NetworkMessageId, token);
+                ISLogger.Write("Sent clipboard operation access token to {0}", client.ClientName);*/
             }
         }
 
@@ -578,7 +600,7 @@ namespace InputshareLib.Server
             catch (Exception) { }
 
             
-            ISLogger.Write("Connection error on {0}: {1}", client.ClientName, error);
+            ISLogger.Write("Server: Connection error on {0}: {1}", client.ClientName, error);
 
             if (inputMan.GetClientHotkey(client.ClientId) != null)
                 inputMan.RemoveClientHotkey(client.ClientId);
@@ -627,7 +649,7 @@ namespace InputshareLib.Server
         private void Client_ClientDisplayConfigUpdated(object sender, DisplayConfig config)
         {
             ISServerSocket client = sender as ISServerSocket;
-            ISLogger.Write("Display config changed for {0}", client.ClientName);
+            ISLogger.Write("Server: Display config changed for {0}", client.ClientName);
         }
 
         #endregion

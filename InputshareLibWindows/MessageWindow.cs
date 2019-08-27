@@ -85,10 +85,11 @@ namespace InputshareLibWindows
                         return;
                     }catch(Exception ex)
                     {
-                        ISLogger.Write("Error setting clipboard data: " + ex.Message);
                         Thread.Sleep(25);
                     }
                 }
+
+                ISLogger.Write("Failed to set clipboard data!");
             }));
         }
 

@@ -31,6 +31,7 @@ namespace InputshareLibWindows.DragDrop
         private WindowsOutputManager outMan = new WindowsOutputManager();
 
         private bool dropSourceAllowDrop = false;
+        private bool reportedSuccess = false;
 
         private Queue<DataObject> dropQueue = new Queue<DataObject>();
         private bool cancelDrop = false;
@@ -57,6 +58,9 @@ namespace InputshareLibWindows.DragDrop
                     ISLogger.Write("Could not start drag drop operation: drop queue is empty");
                     return;
                 }
+
+                reportedSuccess = false;
+
                 if (dropQueue.TryDequeue(out DataObject dropObject))
                 {
                     if (dropObject == null)
@@ -74,8 +78,12 @@ namespace InputshareLibWindows.DragDrop
 
                     if (droppedValue[0] == 0)
                         DragDropCancelled?.Invoke(this, null);
-                    else
+                    else if (!reportedSuccess)
+                    {
+                        reportedSuccess = true;
                         DragDropSuccess?.Invoke(this, null);
+                    }
+                        
                 }
                 else
                 {
@@ -115,16 +123,13 @@ namespace InputshareLibWindows.DragDrop
             try
             {
                 nativeObject = ClipboardTranslatorWindows.ConvertToWindows(data);
-
+                reportedSuccess = false;
                 nativeObject.SetData("InputshareData", new bool());
                 dropQueue.Enqueue(nativeObject);
 
-                //File drops are marked as success when the shell starts to read the first file,
-                //sending an event here will just send a duplicate notification when the dragdrop completes.
-                if(nativeObject.objectType!= ClipboardDataType.File)
-                    nativeObject.DropComplete += NativeObject_DropComplete;
-
+                nativeObject.DropComplete += NativeObject_DropComplete;
                 nativeObject.DropSuccess += NativeObject_DropSuccess;
+
             }
             catch(Exception ex)
             {
@@ -140,7 +145,7 @@ namespace InputshareLibWindows.DragDrop
             this.SetDesktopLocation((int)mPos.X, (int)mPos.Y);
             this.Size = mSize;
             outMan.Send(new InputshareLib.Input.ISInputData(InputshareLib.Input.ISInputCode.IS_MOUSELDOWN, 0, 0));
-
+            outMan.Send(new InputshareLib.Input.ISInputData(InputshareLib.Input.ISInputCode.IS_MOUSERUP, 0, 0));
             Task.Run(() => {
                 Thread.Sleep(300); this.Invoke(new Action(() => {
                     if (!registeredDrop)
@@ -150,10 +155,14 @@ namespace InputshareLibWindows.DragDrop
                 }));
             });
         }
-
         private void NativeObject_DropSuccess(object sender, EventArgs e)
         {
-            DragDropSuccess?.Invoke(this, null);
+            if (!reportedSuccess)
+            {
+                reportedSuccess = true;
+                DragDropSuccess?.Invoke(this, null);
+            }
+            
         }
 
         private void NativeObject_DropComplete(object sender, Guid operationId)

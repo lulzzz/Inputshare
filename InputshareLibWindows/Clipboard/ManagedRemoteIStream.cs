@@ -6,6 +6,9 @@ using System.Runtime.InteropServices.ComTypes;
 
 namespace InputshareLibWindows.Clipboard
 {
+    /// <summary>
+    /// Enables transfering data from an inputshare server/client to windows clipboard
+    /// </summary>
     internal class ManagedRemoteIStream : IStream
     {
         /// <summary>
@@ -56,7 +59,6 @@ namespace InputshareLibWindows.Clipboard
                 //TODO - shell reads 16 bytes of data and discards it when the drop begins??
                 if(bufferSize == 16)
                 {
-                    ISLogger.Write("Ignoring shells 16 byte read");
                     Marshal.WriteInt32(bytesReadPtr, -1);
                     return;
                 }

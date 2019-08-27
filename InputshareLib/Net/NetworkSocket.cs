@@ -145,6 +145,12 @@ namespace InputshareLib.Net
                     case MessageType.RequestFileGroupTokenReponse:
                         RequestGroupTokenResponseMessage resp = response as RequestGroupTokenResponseMessage;
                         return resp.Token;
+                case MessageType.RemoteFileError:
+                    FileErrorMessage err = response as FileErrorMessage;
+                    ISLogger.Write("File token request returned error: " + err.ErrorMessage);
+                    return Guid.Empty;
+                    break;
+
                     default:
                         ISLogger.Write("Debug: Server sent unexpected reply when requesting file access token");
                         return Guid.Empty;
@@ -157,9 +163,9 @@ namespace InputshareLib.Net
         /// </summary>
         /// <param name="networkMessageId">The MessageId used in the read request</param>
         /// <param name="errorMessage">The error message string</param>
-        public void SendStreamReadErrorResponse(Guid networkMessageId, string errorMessage)
+        public void SendFileErrorResponse(Guid networkMessageId, string errorMessage)
         {
-            SendMessage(new FileStreamErrorMessage(errorMessage, networkMessageId));
+            SendMessage(new FileErrorMessage(errorMessage, networkMessageId));
         }
         
         /// <summary>
@@ -192,8 +198,8 @@ namespace InputshareLib.Net
                 case MessageType.FileStreamReadResponse:
                     FileStreamReadResponseMessage resp = response as FileStreamReadResponseMessage;
                     return resp.ReadData;
-                case MessageType.FileStreamReadError:
-                    FileStreamErrorMessage errMsg = response as FileStreamErrorMessage;
+                case MessageType.RemoteFileError:
+                    FileErrorMessage errMsg = response as FileErrorMessage;
                     throw new RemoteFileStreamReadFailedException(errMsg.ErrorMessage);
                 default:
                     throw new InvalidNetworkResponseException("Server responded with unexpected message type " + response.Type);
@@ -232,27 +238,21 @@ namespace InputshareLib.Net
                     }
                     
                     SendMessage(message);
-                    if (!evt.WaitOne(10000))
-                    {
-                        lock (awaitingCollectionsLock)
-                        {
-                            awaitingReturnMethods.Remove(message.MessageId);
-                            awaitingReturnMessages.Remove(message.MessageId);
-                            awaitingMessageIds.Remove(message.MessageId);
-                            evt.Dispose();
-                        }
-                        throw new RequestTimedOutException();
-                    }
+                    bool cancelled = !evt.WaitOne(10000);
 
                     lock (awaitingCollectionsLock)
                     {
                         evt.Dispose();
+
                         awaitingReturnMessages.TryGetValue(message.MessageId, out msg);
                         awaitingReturnMethods.Remove(message.MessageId);
                         awaitingReturnMessages.Remove(message.MessageId);
                         awaitingMessageIds.Remove(message.MessageId);
                     }
-                   
+
+                    if(cancelled)
+                        throw new RequestTimedOutException();
+
                     return msg;
                 });
             }
@@ -600,9 +600,9 @@ namespace InputshareLib.Net
                     {
                         awaitingReturnMessages.Add(msg.MessageId, new FileStreamReadResponseMessage(message));
                     }
-                    else if (type == MessageType.FileStreamReadError)
+                    else if (type == MessageType.RemoteFileError)
                     {
-                        awaitingReturnMessages.Add(msg.MessageId, new FileStreamErrorMessage(message));
+                        awaitingReturnMessages.Add(msg.MessageId, new FileErrorMessage(message));
                     }
 
                     awaitingReturnMethods.TryGetValue(msg.MessageId, out AutoResetEvent evt);

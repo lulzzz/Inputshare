@@ -5,8 +5,8 @@ namespace InputshareLib.DragDrop
 {
     public interface IDragDropManager
     {
-        public event EventHandler DragDropCancelled;
-        public event EventHandler DragDropSuccess;
+        public event EventHandler<Guid> DragDropCancelled;
+        public event EventHandler<Guid> DragDropSuccess;
         public event EventHandler<Guid> DragDropComplete;
         public event EventHandler<ClipboardDataBase> DataDropped;
         public abstract bool Running { get; }
@@ -16,6 +16,6 @@ namespace InputshareLib.DragDrop
         public abstract void Start();
         public abstract void Stop();
         public abstract void CheckForDrop();
-        public abstract void DoDragDrop(ClipboardDataBase data);
+        public abstract void DoDragDrop(ClipboardDataBase data, Guid operationId);
     }
 }

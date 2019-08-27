@@ -1,4 +1,4 @@
-﻿using InputshareLib.Clipboard.DataTypes;
+﻿ using InputshareLib.Clipboard.DataTypes;
 using InputshareLib.Net;
 using System;
 using System.Collections.Generic;
@@ -45,7 +45,8 @@ namespace InputshareLib.Server
 
             if (data.DataType == ClipboardDataType.File)
             {
-                SetClipboardFiles((data as ClipboardVirtualFileData), host, operationId);
+                ISLogger.Write("Clipboard file copy/paste not yet implemented!");
+                //SetClipboardFiles((data as ClipboardVirtualFileData), host, operationId);
             }
             else
             {
@@ -55,7 +56,7 @@ namespace InputshareLib.Server
 
         private async void SetClipboardFiles(ClipboardVirtualFileData cbFiles, ISServerSocket host, Guid operationId)
         {
-            if (currentOperation != null)
+            if (currentOperation != null && currentOperation.DataType == ClipboardDataType.File)
                 previousOperationDictionary.Add(currentOperation.OperationId, currentOperation);
 
             currentOperation = new ClipboardOperation(operationId, cbFiles.DataType, cbFiles, host);
@@ -64,7 +65,6 @@ namespace InputshareLib.Server
                 //TODO - We can't use the same access token for clipboard operations, as more than one client can
                 //be reading from the stream at the same time which will cause corruption. 
                 //We need to create a new access token for each client that pastes the files to create multiple stream instances
-                currentOperation.HostFileAccessToken = GenerateLocalAccessTokenForOperation(currentOperation);
             }
             else
             {
@@ -75,10 +75,65 @@ namespace InputshareLib.Server
                     file.ReadDelegate = File_RequestDataAsync;
                 }
 
-                currentOperation.HostFileAccessToken = await currentOperation.Host.RequestFileTokenAsync(operationId);
+                //Create a token so that localhost can access files
+
+                try
+                {
+                    currentOperation.LocalhostAccessToken = await currentOperation.Host.RequestFileTokenAsync(operationId);
+                }catch(Exception ex)
+                {
+                    ISLogger.Write("GlobalClipboardController: Failed to get access token for clipboard content: " + ex.Message);
+                    return;
+                }
             }
 
             BroadcastCurrentOperation();
+        }
+
+        public async Task<Guid> GenerateAccessToken(Guid operationId)
+        {
+            ClipboardOperation op = GetOperationFromId(operationId);
+
+            if(op == null)
+            {
+                ISLogger.Write("GlobalClipboardController: Error generating access token: operation not found");
+                return Guid.Empty;
+            }
+
+            Guid id;
+
+            if (op.Host.IsLocalhost)
+            {
+                id = GenerateLocalAccessTokenForOperation(op);
+            }
+            else
+            {
+                try
+                {
+                    id = await op.Host.RequestFileTokenAsync(op.OperationId);
+                }catch(Exception ex)
+                {
+                    ISLogger.Write("GlobalClipboardController: Failed to get access token for operation: " + ex.Message);
+                    return Guid.Empty;
+                }
+                
+            }
+
+            op.HostFileAccessTokens.Add(id);
+            return id;
+        }
+
+        
+        public ClipboardOperation GetOperationFromId(Guid operationId)
+        {
+            if (currentOperation?.OperationId == operationId)
+                return currentOperation;
+
+            foreach (var op in previousOperationDictionary)
+                if (op.Value.OperationId == operationId)
+                    return op.Value;
+
+            return null;
         }
 
         private void File_ReadComplete(object sender, EventArgs e)
@@ -94,7 +149,7 @@ namespace InputshareLib.Server
 
         private void SetClipboardTextOrImage(ClipboardDataBase cbData, ISServerSocket host, Guid operationId)
         {
-            if (currentOperation != null)
+            if (currentOperation != null && currentOperation.DataType == ClipboardDataType.File)
                 previousOperationDictionary.Add(currentOperation.OperationId, currentOperation);
 
             currentOperation = new ClipboardOperation(operationId, cbData.DataType, cbData, host);
@@ -136,7 +191,7 @@ namespace InputshareLib.Server
                 fSources[i] = file.AllFiles[i].FullPath;
             }
 
-            return fileController.CreateFileReadTokenForGroup(new FileAccessController.FileAccessInfo(fIds, fSources));
+            return fileController.CreateFileReadTokenForGroup(new FileAccessController.FileAccessInfo(fIds, fSources), 0);
         }
 
         internal class ClipboardOperation
@@ -153,7 +208,8 @@ namespace InputshareLib.Server
             public ClipboardDataType DataType { get; }
             public ClipboardDataBase Data { get; }
             public ISServerSocket Host { get; }
-            public Guid HostFileAccessToken { get; set; }
+            public Guid LocalhostAccessToken { get; set; }
+            public List<Guid> HostFileAccessTokens { get; } = new List<Guid>();
         }
     }
 }

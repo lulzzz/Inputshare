@@ -12,14 +12,16 @@ namespace InputshareLibWindows.DragDrop
         private Thread dropFormThread;
         private WindowsDropTarget dropTargetWindow;
 
+        private Guid currentDropOperation = Guid.Empty;
+
         private Thread dropSourceThread;
         private WindowsDropSource dropSourceWindow;
         public bool Running { get; private set; }
         public bool LeftMouseState { get => (Native.User32.GetAsyncKeyState(System.Windows.Forms.Keys.LButton) & 0x8000) != 0; }
 
         public event EventHandler<ClipboardDataBase> DataDropped;
-        public event EventHandler DragDropCancelled;
-        public event EventHandler DragDropSuccess;
+        public event EventHandler<Guid> DragDropCancelled;
+        public event EventHandler<Guid> DragDropSuccess;
         public event EventHandler<Guid> DragDropComplete;
         private AutoResetEvent formLoadedEvent = new AutoResetEvent(false);
 
@@ -78,21 +80,23 @@ namespace InputshareLibWindows.DragDrop
                 dropTargetWindow.InputshareDataDropped = false;
                 return;
             }
-            DragDropSuccess?.Invoke(this, null);
+
+            DragDropSuccess?.Invoke(this, currentDropOperation);
         }
 
         private void DropSourceWindow_DragDropCancelled(object sender, EventArgs e)
         {
-            DragDropCancelled?.Invoke(this, null);
+            DragDropCancelled?.Invoke(this, currentDropOperation);
         }
 
-        public void DoDragDrop(ClipboardDataBase data)
+        public void DoDragDrop(ClipboardDataBase data, Guid operationId)
         {
             if(!Running)
                 throw new InvalidOperationException("DragDrop manager not running");
             if (dropSourceWindow == null)
                 throw new InvalidOperationException("Form not created");
 
+            currentDropOperation = operationId;
             dropSourceWindow.InvokeDoDragDrop(data);
         }
 

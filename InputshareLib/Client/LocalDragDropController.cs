@@ -50,7 +50,6 @@ namespace InputshareLib.Client
                 if (CurrentOperation.Completed)
                     return;
 
-                ISLogger.Write("Closing dragdrop operation streams...");
                 CurrentOperation.Completed = true;
                 fileController.DeleteToken(CurrentOperation.AssociatedAccessToken);
                 if (!previousOperations.ContainsKey(CurrentOperation.OperationId))
@@ -61,16 +60,14 @@ namespace InputshareLib.Client
             {
                 if (previousOperations.TryGetValue(operationId, out DragDropOperation operation))
                 {
-                    ISLogger.Write("Server marked previous dragdrop operation complete... closing streams");
-
-                    fileController.DeleteToken(CurrentOperation.AssociatedAccessToken);
+                    fileController.DeleteToken(operation.AssociatedAccessToken);
 
                     operation.Completed = true;
                 }
             }
             else
             {
-                ISLogger.Write("Failed to mark dragdrop operation as complete: Could not find operation ID");
+                ISLogger.Write("LocalDragDropController: Failed to mark dragdrop operation as complete: Could not find operation ID");
             }
         }
 
@@ -79,28 +76,26 @@ namespace InputshareLib.Client
             if (!Server.IsConnected)
                 return;
 
-            ISLogger.Write("DragDropMan_DataDropped");
             if (CurrentOperation != null && !previousOperations.ContainsKey(CurrentOperation.OperationId))
             {
                 previousOperations.Add(CurrentOperation.OperationId, CurrentOperation);
             }
 
-            ISLogger.Write("object dropped");
             if (Server.IsConnected)
             {
                 Guid opId = Guid.NewGuid();
                 CurrentOperation = new DragDropOperation(opId, cbData);
-                ISLogger.Write("Started dragdrop operation " + opId);
+                ISLogger.Write("LocalDragDropController: Started dragdrop operation " + opId);
                 Server.SendDragDropData(cbData.ToBytes(), opId);
             }
         }
 
-        internal void Local_DragDropSuccess(object sender, EventArgs e)
+        internal void Local_DragDropSuccess(object sender, Guid id)
         {
             if (!Server.IsConnected)
                 return;
 
-            Server?.NotifyDragDropSuccess(CurrentOperation.OperationId, true);
+            Server?.NotifyDragDropSuccess(id, true);
         }
 
         internal void Local_DragDropComplete(object sender, Guid operationId)
@@ -111,12 +106,12 @@ namespace InputshareLib.Client
             Server?.SendDragDropComplete(operationId);
         }
 
-        internal void Local_DragDropCancelled(object sender, EventArgs e)
+        internal void Local_DragDropCancelled(object sender, Guid operationId)
         {
             if (!Server.IsConnected)
                 return;
 
-            Server?.NotifyDragDropSuccess(CurrentOperation.OperationId, false);
+            Server?.NotifyDragDropSuccess(operationId, false);
         }
 
         private async void BeginReceivedOperation(NetworkSocket.DragDropDataReceivedArgs args)
@@ -124,7 +119,7 @@ namespace InputshareLib.Client
             //Check if the received operation has previously been received
             if (CurrentOperation?.OperationId == args.OperationId)
             {
-                ddManager.DoDragDrop(CurrentOperation.Data);
+                ddManager.DoDragDrop(CurrentOperation.Data, args.OperationId);
                 return;
             }
 
@@ -146,7 +141,7 @@ namespace InputshareLib.Client
                 }
                 catch (Exception ex)
                 {
-                    ISLogger.Write("Failed to get access token for dragdrop operation: " + ex.Message);
+                    ISLogger.Write("LocalDragDropController: Failed to get access token for dragdrop operation: " + ex.Message);
                     return;
                 }
 
@@ -161,7 +156,7 @@ namespace InputshareLib.Client
             }
 
             CurrentOperation = new DragDropOperation(args.OperationId, cbData);
-            ddManager.DoDragDrop(cbData);
+            ddManager.DoDragDrop(cbData, args.OperationId);
         }
 
         private void VirtualFile_ReadComplete(object sender, EventArgs e)

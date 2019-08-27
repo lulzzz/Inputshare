@@ -21,19 +21,25 @@ namespace InputshareLib
         private class AccessToken
         {
             public event EventHandler<Guid> TokenClosed;
-
+            private int timeoutValue = 0;
             private Timer readTimeoutTimer;
             private Stopwatch timeoutStopwatch;
 
-            public AccessToken(Guid tokenId, Guid[] allowedFiles, string[] allowedFileSources)
+            public AccessToken(Guid tokenId, Guid[] allowedFiles, string[] allowedFileSources, int timeout)
             {
-                timeoutStopwatch = new Stopwatch();
-                timeoutStopwatch.Start();
+                if(timeout != 0)
+                {
+                    timeoutValue = timeout;
+                    timeoutStopwatch = new Stopwatch();
+                    timeoutStopwatch.Start();
 
-                readTimeoutTimer = new Timer(2000);
-                readTimeoutTimer.Elapsed += ReadTimeoutTimer_Elapsed;
-                readTimeoutTimer.AutoReset = true;
-                readTimeoutTimer.Start();
+                    readTimeoutTimer = new Timer(2000);
+                    readTimeoutTimer.Elapsed += ReadTimeoutTimer_Elapsed;
+                    readTimeoutTimer.AutoReset = true;
+                    readTimeoutTimer.Start();
+                }
+
+                
 
                 TokenId = tokenId;
                 AllowedFiles = allowedFiles;
@@ -47,10 +53,9 @@ namespace InputshareLib
             private void ReadTimeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
             {
                 //If this token has not been access in the past 10 seconds, close all streams.
-                if(timeoutStopwatch.ElapsedMilliseconds > 10000)
+                if(timeoutStopwatch.ElapsedMilliseconds > timeoutValue)
                 {
                     CloseAllStreams();
-
                 }
             }
 
@@ -81,7 +86,12 @@ namespace InputshareLib
                 timeoutStopwatch.Restart();
                 if (openFileStreams.TryGetValue(file, out FileStream stream))
                 {
-                    return stream.Read(buffer, offset, readLen);
+                    int read = stream.Read(buffer, offset, readLen);
+
+                    if(stream.Position == stream.Length)
+                        CloseStream(file);
+
+                    return read;
                 }
                 else
                 {
@@ -90,7 +100,12 @@ namespace InputshareLib
                         FileStream fs = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read);
                         //ISLogger.Write("Debug: Filestream created for " + source);
                         openFileStreams.Add(file, fs);
-                        return fs.Read(buffer, offset, readLen);
+                        int read = fs.Read(buffer, offset, readLen);
+
+                        if (fs.Position == fs.Length)
+                            CloseStream(file);
+
+                        return read;
                     }
                     else
                     {
@@ -131,18 +146,24 @@ namespace InputshareLib
             private Dictionary<Guid, FileStream> openFileStreams = new Dictionary<Guid, FileStream>();
         }
 
-        public Guid CreateFileReadToken(string sourceFile, Guid fileId)
+        public Guid CreateFileReadToken(string sourceFile, Guid fileId, int timeout)
         {
             Guid id = Guid.NewGuid();
-            AccessToken newToken = new AccessToken(id, new Guid[] { fileId }, new string[] { sourceFile });
+            AccessToken newToken = new AccessToken(id, new Guid[] { fileId }, new string[] { sourceFile }, timeout);
             currentAccessTokens.Add(id, newToken);
             return id;
         }
 
-        public Guid CreateFileReadTokenForGroup(FileAccessInfo info)
+        /// <summary>
+        /// Creates an access token for a group of files
+        /// </summary>
+        /// <param name="info">The file IDs and file sources to include in token</param>
+        /// <param name="timeout">Time in seconds to automatically delete token if inactive. 0 = disabled</param>
+        /// <returns></returns>
+        public Guid CreateFileReadTokenForGroup(FileAccessInfo info, int timeout)
         {
             Guid accessId = Guid.NewGuid();
-            AccessToken token = new AccessToken(accessId, info.FileIds, info.FileSources);
+            AccessToken token = new AccessToken(accessId, info.FileIds, info.FileSources, timeout);
             token.TokenClosed += Token_TokenClosed;
             currentAccessTokens.Add(accessId, token);
             ISLogger.Write("FileAccessController: Created group token {0} for {1} files", accessId, info.FileIds.Length);
@@ -199,15 +220,13 @@ namespace InputshareLib
 
         public void DeleteToken(Guid token)
         {
-            ISLogger.Write("Deleting access token " + token);
-
             if (currentAccessTokens.ContainsKey(token))
             {
                 currentAccessTokens.TryGetValue(token, out AccessToken access);
 
                 if(access == null)
                 {
-                    ISLogger.Write("Could not delete access token: Access token was null");
+                    ISLogger.Write("FileAccessController: Could not delete access token: Access token was null");
                     return;
                 }
 
@@ -216,7 +235,7 @@ namespace InputshareLib
             }
             else
             {
-                ISLogger.Write("Could not delete access token: Key {0} not found", token);
+                ISLogger.Write("FileAccessController: Could not delete access token: Key {0} not found", token);
             }
 
         }

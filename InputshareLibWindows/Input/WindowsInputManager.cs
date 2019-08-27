@@ -222,7 +222,7 @@ namespace InputshareLibWindows.Input
                 while (!cancelSource.IsCancellationRequested)
                 {
                     NativeInputData data = inputTranslateQueue.Take(cancelSource.Token);
-                    if (data.code >= 0x0200 && data.code <= 0x020A)
+                    if (data.code >= 512 && data.code <= 524)
                     {
                         ConvertMouseInputData(data.code, ref data.mStruct); ;
                     }
@@ -239,7 +239,6 @@ namespace InputshareLibWindows.Input
         private void ConvertMouseInputData(int code, ref MSLLHOOKSTRUCT mouseStruct)
         {
             ISInputData translatedData = null;
-
             switch (code)
             {
                 case WM_MOUSEMOVE:

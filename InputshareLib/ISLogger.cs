@@ -83,7 +83,7 @@ namespace InputshareLib
                     logWriteQueue.Add(new LogMessage(string.Format(message, args)));
                 }
             }
-            catch (Exception ex) { Console.WriteLine("Islogger log error: " + ex.Message); }
+            catch (Exception ex) { logWriteQueue.Add(new LogMessage(message)); };
             
         }
 

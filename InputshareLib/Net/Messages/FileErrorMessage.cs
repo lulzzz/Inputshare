@@ -4,14 +4,14 @@ using System.Text;
 
 namespace InputshareLib.Net.Messages
 {
-    internal class FileStreamErrorMessage : NetworkMessage
+    internal class FileErrorMessage : NetworkMessage
     {
-        public FileStreamErrorMessage(string errorMessage, Guid messageId = default) : base(MessageType.FileStreamReadError, messageId)
+        public FileErrorMessage(string errorMessage, Guid messageId = default) : base(MessageType.RemoteFileError, messageId)
         {
             ErrorMessage = errorMessage;
         }
 
-        public FileStreamErrorMessage(byte[] data) : base(data)
+        public FileErrorMessage(byte[] data) : base(data)
         {
             using (MemoryStream ms = new MemoryStream(data, 21, data.Length - 21))
             {

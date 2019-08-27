@@ -4,6 +4,11 @@ namespace InputshareLib.Clipboard.DataTypes
 {
     public class ClipboardImageData : ClipboardDataBase
     {
+        /// <summary>
+        /// Creates an instance of clipboardimagedata with the specified raw image data
+        /// </summary>
+        /// <param name="imageData"></param>
+        /// <param name="constructor"></param>
         public ClipboardImageData(byte[] imageData, bool constructor = false)
         {
             if (imageData == null)
@@ -13,10 +18,14 @@ namespace InputshareLib.Clipboard.DataTypes
 
         }
 
-        public ClipboardImageData(byte[] data)
+        /// <summary>
+        /// Creates an instance of clipboardimagedata from a byte array
+        /// </summary>
+        /// <param name="rawData"></param>
+        public ClipboardImageData(byte[] rawData)
         {
-            ImageData = new byte[data.Length - 1];
-            Buffer.BlockCopy(data, 1, ImageData, 0, ImageData.Length);
+            ImageData = new byte[rawData.Length - 1];
+            Buffer.BlockCopy(rawData, 1, ImageData, 0, ImageData.Length);
         }
 
         public override byte[] ToBytes()

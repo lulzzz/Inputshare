@@ -27,7 +27,7 @@
         RequestFileGroupTokenReponse = 22,
         FileStreamReadRequest = 23,
         FileStreamReadResponse = 24,
-        FileStreamReadError = 25,
+        RemoteFileError = 25,
         FileStreamCloseRequest = 26,
         CancelAnyDragDrop = 27,
         DragDropComplete = 28,
